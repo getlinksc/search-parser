@@ -60,8 +60,8 @@ Changelog = "https://github.com/yourusername/search-engine-parser/blob/main/CHAN
 [project.scripts]
 search-engine-parser = "search_engine_parser.cli:main"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "mypy>=1.7.0",
