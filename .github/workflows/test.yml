@@ -31,7 +31,7 @@ jobs:
         run: uv run pytest --cov=search_engine_parser --cov-report=xml --cov-report=term --cov-report=html
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         if: matrix.python-version == '3.11'
         with:
           file: ./coverage.xml
