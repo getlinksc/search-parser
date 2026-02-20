@@ -68,12 +68,40 @@ class GoogleParser(BaseParser):
         """Find all organic result containers."""
         search_div = soup.find("div", id="search")
         if isinstance(search_div, Tag):
-            return [
+            g_divs = [
                 t
                 for t in search_div.find_all("div", class_="g", recursive=True)
                 if isinstance(t, Tag)
             ]
+            if g_divs:
+                return g_divs
+            # Fallback: locate results by their yuRUbf (title/link) sections
+            # and walk up to find a container that also holds the description.
+            return self._find_results_by_title_links(search_div)
         return [t for t in soup.find_all("div", class_="g") if isinstance(t, Tag)]
+
+    def _find_results_by_title_links(self, root: Tag) -> list[Tag]:
+        """Find result containers by locating yuRUbf divs and their ancestors."""
+        containers: list[Tag] = []
+        seen: set[int] = set()
+        for yu in root.find_all("div", class_="yuRUbf", recursive=True):
+            container = self._find_result_container(yu, root)
+            if isinstance(container, Tag) and id(container) not in seen:
+                seen.add(id(container))
+                containers.append(container)
+        return containers
+
+    def _find_result_container(self, title_link: Tag, root: Tag) -> Tag | None:
+        """Walk up from a yuRUbf div to find the closest ancestor with a description."""
+        ancestor = title_link.parent
+        for _ in range(5):
+            if not isinstance(ancestor, Tag) or ancestor is root:
+                break
+            if ancestor.find("div", class_="VwiC3b") or ancestor.find("span", class_="st"):
+                return ancestor
+            ancestor = ancestor.parent
+        # No description ancestor found; use direct parent of yuRUbf
+        return title_link.parent if isinstance(title_link.parent, Tag) else None
 
     def _parse_organic_result(self, item: Tag, position: int) -> SearchResult | None:
         """Parse a single organic result div."""
