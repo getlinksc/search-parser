@@ -30,10 +30,25 @@ def bing_organic_html() -> str:
 
 
 @pytest.fixture()
+def bing_github_repos_html() -> str:
+    return (FIXTURES_DIR / "bing" / "search_github_repos.html").read_text()
+
+
+@pytest.fixture()
 def google_github_repos_html() -> str:
     return (FIXTURES_DIR / "google" / "search_github_repos.html").read_text()
 
 
 @pytest.fixture()
+def google_scheduling_app_html() -> str:
+    return (FIXTURES_DIR / "google" / "search_best_employee_scheduling_app.html").read_text()
+
+
+@pytest.fixture()
 def duckduckgo_organic_html() -> str:
     return (FIXTURES_DIR / "duckduckgo" / "organic_results.html").read_text()
+
+
+@pytest.fixture()
+def duckduckgo_github_repos_html() -> str:
+    return (FIXTURES_DIR / "duckduckgo" / "search_github_repos.html").read_text()

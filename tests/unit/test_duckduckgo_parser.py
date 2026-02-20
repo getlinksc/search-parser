@@ -77,3 +77,30 @@ class TestDuckDuckGoParser:
     def test_detection_confidence(self, duckduckgo_organic_html: str) -> None:
         results = self.parser.parse(duckduckgo_organic_html)
         assert results.detection_confidence >= 0.8
+
+    def test_parse_github_repos_results(self, duckduckgo_github_repos_html: str) -> None:
+        results = self.parser.parse(duckduckgo_github_repos_html)
+        assert results.search_engine == "duckduckgo"
+        assert results.query == "github repos"
+        assert results.detection_confidence >= 0.8
+        assert len(results.results) == 4
+
+        first = results.results[0]
+        assert first.title == "Trending repositories on GitHub today"
+        assert first.url == "https://github.com/trending"
+        assert first.position == 1
+        assert first.result_type == "organic"
+        assert first.description is not None
+
+    def test_parse_github_repos_positions(self, duckduckgo_github_repos_html: str) -> None:
+        results = self.parser.parse(duckduckgo_github_repos_html)
+        positions = [r.position for r in results.results]
+        assert positions == [1, 2, 3, 4]
+
+    def test_parse_github_repos_all_have_descriptions(
+        self, duckduckgo_github_repos_html: str
+    ) -> None:
+        results = self.parser.parse(duckduckgo_github_repos_html)
+        for r in results.results:
+            assert r.description is not None
+            assert len(r.description) > 0

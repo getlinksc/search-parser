@@ -42,6 +42,10 @@ class GoogleParser(BaseParser):
         results: list[SearchResult] = []
         position = 1
 
+        # Extract sponsored results
+        sponsored = self._extract_sponsored_results(soup)
+        results.extend(sponsored)
+
         # Extract featured snippet
         featured = self._extract_featured_snippet(soup)
         if featured:
@@ -138,6 +142,53 @@ class GoogleParser(BaseParser):
             description=description,
             position=position,
             result_type="organic",
+        )
+
+    def _extract_sponsored_results(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract sponsored (ad) results from Google search pages."""
+        results: list[SearchResult] = []
+        for block in soup.find_all("div", class_="vbIt3d"):
+            if not isinstance(block, Tag):
+                continue
+            for ad in block.find_all("div", class_="uEierd"):
+                result = self._parse_sponsored_ad(ad)
+                if result:
+                    results.append(result)
+        return results
+
+    def _parse_sponsored_ad(self, ad: Tag) -> SearchResult | None:
+        """Parse a single Google sponsored ad container."""
+        link = ad.find("a", class_="sVXRqc")
+        if not isinstance(link, Tag):
+            return None
+
+        url = str(link.get("href", ""))
+        if not url or not url.startswith("http"):
+            return None
+
+        heading = link.find(attrs={"role": "heading"})
+        title = clean_text(heading.get_text()) if isinstance(heading, Tag) else ""
+        if not title:
+            return None
+
+        # Find description outside the main ad link
+        description = None
+        for desc_div in ad.find_all("div", class_="Va3FIb"):
+            if not isinstance(desc_div, Tag):
+                continue
+            if desc_div.find_parent("a", class_="sVXRqc"):
+                continue
+            text = clean_text(desc_div.get_text())
+            if text and text != title:
+                description = text
+                break
+
+        return SearchResult(
+            title=title,
+            url=url,
+            description=description,
+            position=0,
+            result_type="sponsored",
         )
 
     def _extract_featured_snippet(self, soup: BeautifulSoup) -> SearchResult | None:
