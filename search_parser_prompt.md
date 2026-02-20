@@ -2,7 +2,7 @@
 # Search Engine HTML Parser - Claude Code Build Prompt
 
 ## Project Overview
-**Project Name:** SearchEngineParser (or `search-engine-parser`)
+**Project Name:** SearchEngineParser (or `search-parser`)
 
 **Project Type:** Open-source Python library for parsing search engine HTML results
 
@@ -96,7 +96,7 @@ results_dict = parser.parse(html_string, output_format="dict")
 
 ### Project Structure
 ```
-search-engine-parser/
+search-parser/
 ├── src/
 │   └── search_engine_parser/
 │       ├── __init__.py              # Public API exports
@@ -185,18 +185,18 @@ search-engine-parser/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Install the package
-uv pip install search-engine-parser
+uv pip install search-parser
 
 # Or with CLI extras
-uv pip install "search-engine-parser[cli]"
+uv pip install "search-parser[cli]"
 ```
 
 **Using pip:**
 ```bash
-pip install search-engine-parser
+pip install search-parser
 
 # Or with CLI extras
-pip install "search-engine-parser[cli]"
+pip install "search-parser[cli]"
 ```
 
 ### For Contributors
@@ -204,8 +204,8 @@ pip install "search-engine-parser[cli]"
 **Using uv (recommended):**
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/search-engine-parser.git
-cd search-engine-parser
+git clone https://github.com/getlinksc/search-parser.git
+cd search-parser
 
 # Install uv if you haven't already
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -227,8 +227,8 @@ uv run pre-commit install
 **Using traditional tools:**
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/search-engine-parser.git
-cd search-engine-parser
+git clone https://github.com/getlinksc/search-parser.git
+cd search-parser
 
 # Create virtual environment
 python -m venv .venv
@@ -279,15 +279,15 @@ pre-commit install
     ```markdown
     # Search Parser
     
-    [![PyPI version](https://badge.fury.io/py/search-engine-parser.svg)](https://badge.fury.io/py/search-engine-parser)
-    [![Python Support](https://img.shields.io/pypi/pyversions/search-engine-parser.svg)](https://pypi.org/project/search-engine-parser/)
-    [![Tests](https://github.com/yourusername/search-engine-parser/workflows/Tests/badge.svg)](https://github.com/yourusername/search-engine-parser/actions?query=workflow%3ATests)
-    [![Lint](https://github.com/yourusername/search-engine-parser/workflows/Lint/badge.svg)](https://github.com/yourusername/search-engine-parser/actions?query=workflow%3ALint)
-    [![codecov](https://codecov.io/gh/yourusername/search-engine-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/search-engine-parser)
+    [![PyPI version](https://badge.fury.io/py/search-parser.svg)](https://badge.fury.io/py/search-parser)
+    [![Python Support](https://img.shields.io/pypi/pyversions/search-parser.svg)](https://pypi.org/project/search-parser/)
+    [![Tests](https://github.com/getlinksc/search-parser/workflows/Tests/badge.svg)](https://github.com/getlinksc/search-parser/actions?query=workflow%3ATests)
+    [![Lint](https://github.com/getlinksc/search-parser/workflows/Lint/badge.svg)](https://github.com/getlinksc/search-parser/actions?query=workflow%3ALint)
+    [![codecov](https://codecov.io/gh/getlinksc/search-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/getlinksc/search-parser)
     [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
     [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
     [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-    [![Downloads](https://pepy.tech/badge/search-engine-parser/month)](https://pepy.tech/project/search-engine-parser)
+    [![Downloads](https://pepy.tech/badge/search-parser/month)](https://pepy.tech/project/search-parser)
     
     Parse search engine HTML results into structured data (JSON, Markdown) with auto-detection.
     ```
@@ -459,7 +459,7 @@ A comprehensive guide...
 
 ---
 
-*Parsed with search-engine-parser v0.1.0*
+*Parsed with search-parser v0.1.0*
 ```
 
 **Implementation Note for Markdown Formatter:**
@@ -799,7 +799,7 @@ jobs:
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: your-gist-id-here
-          filename: search-engine-parser-coverage.json
+          filename: search-parser-coverage.json
           label: coverage
           message: ${{ env.COVERAGE }}
           color: ${{ env.COVERAGE_COLOR }}
@@ -816,7 +816,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "search-engine-parser"
+name = "search-parser"
 version = "0.1.0"
 description = "Parse search engine HTML results into structured data"
 readme = "README.md"
@@ -863,14 +863,14 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/search-engine-parser"
-Documentation = "https://search-engine-parser.readthedocs.io"
-Repository = "https://github.com/yourusername/search-engine-parser"
-Issues = "https://github.com/yourusername/search-engine-parser/issues"
-Changelog = "https://github.com/yourusername/search-engine-parser/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/getlinksc/search-parser"
+Documentation = "https://search-parser.readthedocs.io"
+Repository = "https://github.com/getlinksc/search-parser"
+Issues = "https://github.com/getlinksc/search-parser/issues"
+Changelog = "https://github.com/getlinksc/search-parser/blob/main/CHANGELOG.md"
 
 [project.scripts]
-search-engine-parser = "search_engine_parser.cli:main"
+search-parser = "search_engine_parser.cli:main"
 
 [tool.uv]
 dev-dependencies = [
@@ -968,14 +968,14 @@ directory = "htmlcov"
 **Use Case 1: LLM Application**
 ```
 Given: User's LLM app performs web search via API that returns HTML
-When: User passes HTML to search-engine-parser
+When: User passes HTML to search-parser
 Then: Parser extracts results in markdown format that LLM can understand and process
 ```
 
 **Use Case 2: Data Analysis**
 ```
 Given: Researcher has 1000 saved Google search result pages
-When: Batch process all HTML files with search-engine-parser
+When: Batch process all HTML files with search-parser
 Then: Generate JSON dataset for analysis of ranking changes over time
 ```
 
@@ -1024,7 +1024,7 @@ Create minimal, anonymized HTML fixtures like:
 
 **Codecov Setup (Automatic Coverage Reports):**
 1. Go to https://codecov.io and sign in with GitHub
-2. Click "Add Repository" and enable your `search-engine-parser` repository
+2. Click "Add Repository" and enable your `search-parser` repository
 3. Go to repository settings → Secrets and add:
    - `CODECOV_TOKEN` (get from Codecov dashboard)
 4. The test workflow will automatically upload coverage to Codecov
@@ -1034,14 +1034,14 @@ Create minimal, anonymized HTML fixtures like:
 **Badge URLs for README:**
 ```markdown
 # Main Badges
-[![Tests](https://github.com/USERNAME/search-engine-parser/workflows/Tests/badge.svg)](https://github.com/USERNAME/search-engine-parser/actions?query=workflow%3ATests)
-[![Lint](https://github.com/USERNAME/search-engine-parser/workflows/Lint/badge.svg)](https://github.com/USERNAME/search-engine-parser/actions?query=workflow%3ALint)
-[![codecov](https://codecov.io/gh/USERNAME/search-engine-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/search-engine-parser)
+[![Tests](https://github.com/USERNAME/search-parser/workflows/Tests/badge.svg)](https://github.com/USERNAME/search-parser/actions?query=workflow%3ATests)
+[![Lint](https://github.com/USERNAME/search-parser/workflows/Lint/badge.svg)](https://github.com/USERNAME/search-parser/actions?query=workflow%3ALint)
+[![codecov](https://codecov.io/gh/USERNAME/search-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/USERNAME/search-parser)
 
 # Package Badges
-[![PyPI version](https://badge.fury.io/py/search-engine-parser.svg)](https://badge.fury.io/py/search-engine-parser)
-[![Python Support](https://img.shields.io/pypi/pyversions/search-engine-parser.svg)](https://pypi.org/project/search-engine-parser/)
-[![Downloads](https://pepy.tech/badge/search-engine-parser/month)](https://pepy.tech/project/search-engine-parser)
+[![PyPI version](https://badge.fury.io/py/search-parser.svg)](https://badge.fury.io/py/search-parser)
+[![Python Support](https://img.shields.io/pypi/pyversions/search-parser.svg)](https://pypi.org/project/search-parser/)
+[![Downloads](https://pepy.tech/badge/search-parser/month)](https://pepy.tech/project/search-parser)
 
 # Code Quality Badges
 [![Code style: ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
@@ -1108,9 +1108,9 @@ After implementation, please:
 7. ✅ Verify Markdown output is well-formatted and readable
 8. ✅ Test all three output formats (json, markdown, dict) with same HTML
 9. ✅ Test CLI if implemented: 
-   - `search-engine-parser examples/google.html` (default JSON)
-   - `search-engine-parser examples/google.html --format markdown`
-   - `search-engine-parser examples/google.html --format json --pretty`
+   - `search-parser examples/google.html` (default JSON)
+   - `search-parser examples/google.html --format markdown`
+   - `search-parser examples/google.html --format json --pretty`
 10. ✅ Verify package can be installed: `pip install -e .`
 11. ✅ Check that README examples actually work
 12. ✅ Test markdownify properly converts HTML to clean Markdown

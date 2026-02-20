@@ -1,4 +1,4 @@
-# Contributing to search-engine-parser
+# Contributing to search-parser
 
 Thank you for your interest in contributing! This guide will help you get started.
 
@@ -11,8 +11,8 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/search-engine-parser/search-engine-parser.git
-cd search-engine-parser
+git clone https://github.com/getlinksc/search-parser.git
+cd search-parser
 ```
 
 ### 2. Install dependencies
@@ -201,9 +201,9 @@ uv run pytest -k "test_detect"
 
 ## Reporting Issues
 
-- Use the [bug report template](https://github.com/search-engine-parser/search-engine-parser/issues/new?template=bug_report.md) for bugs.
-- Use the [feature request template](https://github.com/search-engine-parser/search-engine-parser/issues/new?template=feature_request.md) for new ideas.
+- Use the [bug report template](https://github.com/getlinksc/search-parser/issues/new?template=bug_report.md) for bugs.
+- Use the [feature request template](https://github.com/getlinksc/search-parser/issues/new?template=feature_request.md) for new ideas.
 
 ---
 
-Thank you for helping make `search-engine-parser` better!
+Thank you for helping make `search-parser` better!

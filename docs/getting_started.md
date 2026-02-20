@@ -4,17 +4,17 @@
 
 **Using uv (recommended):**
 ```bash
-uv pip install search-engine-parser
+uv pip install search-parser
 ```
 
 **Using pip:**
 ```bash
-pip install search-engine-parser
+pip install search-parser
 ```
 
 **With CLI extras:**
 ```bash
-pip install "search-engine-parser[cli]"
+pip install "search-parser[cli]"
 ```
 
 ## Basic Usage
@@ -44,11 +44,11 @@ for result in dict_output["results"]:
 
 ```bash
 # JSON output (default)
-search-engine-parser results.html
+search-parser results.html
 
 # Markdown output
-search-engine-parser results.html --format markdown
+search-parser results.html --format markdown
 
 # Specify engine manually
-search-engine-parser results.html --engine google
+search-parser results.html --engine google
 ```

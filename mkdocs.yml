@@ -1,7 +1,7 @@
 site_name: Search Engine Parser
 site_description: Parse search engine HTML results into structured data
-repo_url: https://github.com/yourusername/search-engine-parser
-repo_name: search-engine-parser
+repo_url: https://github.com/getlinksc/search-parser
+repo_name: search-parser
 
 theme:
   name: material
