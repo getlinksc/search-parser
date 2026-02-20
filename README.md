@@ -1,16 +1,16 @@
-# search-engine-parser
+# search-parser
 
-[![PyPI](https://img.shields.io/pypi/v/search-engine-parser)](https://pypi.org/project/search-engine-parser/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/search-engine-parser)](https://pypi.org/project/search-engine-parser/)
-[![Tests](https://github.com/getlinksc/search-engine-parser/actions/workflows/test.yml/badge.svg)](https://github.com/getlinksc/search-engine-parser/actions/workflows/test.yml)
-[![Lint](https://github.com/getlinksc/search-engine-parser/actions/workflows/lint.yml/badge.svg)](https://github.com/getlinksc/search-engine-parser/actions/workflows/lint.yml)
-[![codecov](https://codecov.io/gh/getlinksc/search-engine-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/getlinksc/search-engine-parser)
+[![PyPI](https://img.shields.io/pypi/v/search-parser)](https://pypi.org/project/search-parser/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/search-parser)](https://pypi.org/project/search-parser/)
+[![Tests](https://github.com/getlinksc/search-parser/actions/workflows/test.yml/badge.svg)](https://github.com/getlinksc/search-parser/actions/workflows/test.yml)
+[![Lint](https://github.com/getlinksc/search-parser/actions/workflows/lint.yml/badge.svg)](https://github.com/getlinksc/search-parser/actions/workflows/lint.yml)
+[![codecov](https://codecov.io/gh/getlinksc/search-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/getlinksc/search-parser)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **Parse search engine HTML results into structured data (JSON, Markdown) with auto-detection.**
 
-`search-engine-parser` takes raw HTML from popular search engines and extracts structured result data -- titles, URLs, snippets, and more -- into your preferred output format. It auto-detects the search engine from the HTML content, so you don't have to specify which parser to use.
+`search-parser` takes raw HTML from popular search engines and extracts structured result data -- titles, URLs, snippets, and more -- into your preferred output format. It auto-detects the search engine from the HTML content, so you don't have to specify which parser to use.
 
 ---
 
@@ -46,13 +46,13 @@ for result in results:
 **With uv (recommended):**
 
 ```bash
-uv add search-engine-parser
+uv add search-parser
 ```
 
 **With pip:**
 
 ```bash
-pip install search-engine-parser
+pip install search-parser
 ```
 
 ---
@@ -132,32 +132,32 @@ Another example snippet text...
 
 ## CLI Usage
 
-`search-engine-parser` includes a command-line interface for quick parsing:
+`search-parser` includes a command-line interface for quick parsing:
 
 ```bash
 # Parse an HTML file to JSON (auto-detects search engine)
-search-engine-parser parse results.html --format json
+search-parser parse results.html --format json
 
 # Parse with explicit engine
-search-engine-parser parse results.html --engine google --format markdown
+search-parser parse results.html --engine google --format markdown
 
 # Read from stdin
-cat results.html | search-engine-parser parse - --format json
+cat results.html | search-parser parse - --format json
 
 # Output to a file
-search-engine-parser parse results.html --format json --output results.json
+search-parser parse results.html --format json --output results.json
 ```
 
 ---
 
 ## Documentation
 
-Full documentation is available at [https://search-engine-parser.github.io/search-engine-parser/](https://search-engine-parser.github.io/search-engine-parser/).
+Full documentation is available at [https://search-parser.github.io/search-parser/](https://search-parser.github.io/search-parser/).
 
-- [Getting Started](https://search-engine-parser.github.io/search-engine-parser/getting_started/)
-- [API Reference](https://search-engine-parser.github.io/search-engine-parser/api_reference/)
-- [Adding a New Search Engine](https://search-engine-parser.github.io/search-engine-parser/adding_search_engine/)
-- [Examples](https://search-engine-parser.github.io/search-engine-parser/examples/basic_usage/)
+- [Getting Started](https://search-parser.github.io/search-parser/getting_started/)
+- [API Reference](https://search-parser.github.io/search-parser/api_reference/)
+- [Adding a New Search Engine](https://search-parser.github.io/search-parser/adding_search_engine/)
+- [Examples](https://search-parser.github.io/search-parser/examples/basic_usage/)
 
 ---
 

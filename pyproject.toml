@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "search-engine-parser"
+name = "search-parser"
 version = "0.0.1"
 description = "Parse search engine HTML results into structured data"
 readme = "README.md"
@@ -51,14 +51,14 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/search-engine-parser"
-Documentation = "https://yourusername.github.io/search-engine-parser"
-Repository = "https://github.com/yourusername/search-engine-parser"
-Issues = "https://github.com/yourusername/search-engine-parser/issues"
-Changelog = "https://github.com/yourusername/search-engine-parser/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/getlinksc/search-parser"
+Documentation = "https://getlinksc.github.io/search-parser"
+Repository = "https://github.com/getlinksc/search-parser"
+Issues = "https://github.com/getlinksc/search-parser/issues"
+Changelog = "https://github.com/getlinksc/search-parser/blob/main/CHANGELOG.md"
 
 [project.scripts]
-search-engine-parser = "search_engine_parser.cli:main"
+search-parser = "search_engine_parser.cli:main"
 
 [dependency-groups]
 dev = [
@@ -70,6 +70,9 @@ dev = [
     "types-beautifulsoup4",
     "lxml-stubs",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/search_engine_parser"]
 
 [tool.ruff]
 line-length = 100
