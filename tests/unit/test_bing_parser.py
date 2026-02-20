@@ -55,3 +55,26 @@ class TestBingParser:
     def test_detection_confidence(self, bing_organic_html: str) -> None:
         results = self.parser.parse(bing_organic_html)
         assert results.detection_confidence >= 0.85
+
+    def test_parse_github_repos_results(self, bing_github_repos_html: str) -> None:
+        results = self.parser.parse(bing_github_repos_html)
+        assert results.search_engine == "bing"
+        assert results.query == "github repos"
+        assert results.detection_confidence >= 0.85
+        assert len(results.results) == 9
+
+        first = results.results[0]
+        assert "Open-Source Repositories" in first.title
+        assert first.position == 1
+        assert first.result_type == "organic"
+
+    def test_parse_github_repos_positions(self, bing_github_repos_html: str) -> None:
+        results = self.parser.parse(bing_github_repos_html)
+        positions = [r.position for r in results.results]
+        assert positions == list(range(1, 10))
+
+    def test_parse_github_repos_all_have_urls(self, bing_github_repos_html: str) -> None:
+        results = self.parser.parse(bing_github_repos_html)
+        for r in results.results:
+            assert r.url is not None
+            assert len(r.url) > 0

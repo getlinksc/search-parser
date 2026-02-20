@@ -99,3 +99,28 @@ class TestGoogleParser:
         for r in results.results:
             assert r.description is not None
             assert len(r.description) > 0
+
+    def test_parse_sponsored_results(self, google_scheduling_app_html: str) -> None:
+        results = self.parser.parse(google_scheduling_app_html)
+        sponsored = [r for r in results.results if r.result_type == "sponsored"]
+        assert len(sponsored) == 6
+        assert sponsored[0].title == "Employee Scheduling Software"
+        assert sponsored[0].url.startswith("https://www.inovalon.com/")
+        assert sponsored[0].position == 0
+
+    def test_parse_sponsored_all_have_descriptions(
+        self, google_scheduling_app_html: str
+    ) -> None:
+        results = self.parser.parse(google_scheduling_app_html)
+        sponsored = [r for r in results.results if r.result_type == "sponsored"]
+        for r in sponsored:
+            assert r.description is not None
+            assert len(r.description) > 0
+
+    def test_parse_sponsored_with_organic(self, google_scheduling_app_html: str) -> None:
+        results = self.parser.parse(google_scheduling_app_html)
+        sponsored = [r for r in results.results if r.result_type == "sponsored"]
+        organic = [r for r in results.results if r.result_type == "organic"]
+        assert len(sponsored) == 6
+        assert len(organic) == 8
+        assert results.query == "best employee scheduling app"
