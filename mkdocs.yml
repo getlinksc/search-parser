@@ -1,0 +1,48 @@
+site_name: Search Engine Parser
+site_description: Parse search engine HTML results into structured data
+repo_url: https://github.com/yourusername/search-engine-parser
+repo_name: search-engine-parser
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.sections
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - API Reference: api_reference.md
+  - Contributing: contributing.md
+  - Adding a Search Engine: adding_search_engine.md
+  - Examples:
+    - Basic Usage: examples/basic_usage.md
+    - Advanced Usage: examples/advanced_usage.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - admonition
+  - toc:
+      permalink: true

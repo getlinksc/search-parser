@@ -1,0 +1,34 @@
+"""Shared pytest fixtures."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
+
+
+@pytest.fixture()
+def google_organic_html() -> str:
+    return (FIXTURES_DIR / "google" / "organic_results.html").read_text()
+
+
+@pytest.fixture()
+def google_featured_html() -> str:
+    return (FIXTURES_DIR / "google" / "featured_snippet.html").read_text()
+
+
+@pytest.fixture()
+def google_knowledge_html() -> str:
+    return (FIXTURES_DIR / "google" / "knowledge_panel.html").read_text()
+
+
+@pytest.fixture()
+def bing_organic_html() -> str:
+    return (FIXTURES_DIR / "bing" / "organic_results.html").read_text()
+
+
+@pytest.fixture()
+def duckduckgo_organic_html() -> str:
+    return (FIXTURES_DIR / "duckduckgo" / "organic_results.html").read_text()
