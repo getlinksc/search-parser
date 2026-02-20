@@ -108,9 +108,7 @@ class TestGoogleParser:
         assert sponsored[0].url.startswith("https://www.inovalon.com/")
         assert sponsored[0].position == 0
 
-    def test_parse_sponsored_all_have_descriptions(
-        self, google_scheduling_app_html: str
-    ) -> None:
+    def test_parse_sponsored_all_have_descriptions(self, google_scheduling_app_html: str) -> None:
         results = self.parser.parse(google_scheduling_app_html)
         sponsored = [r for r in results.results if r.result_type == "sponsored"]
         for r in sponsored:
