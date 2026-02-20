@@ -2,9 +2,9 @@
 
 [![PyPI](https://img.shields.io/pypi/v/search-engine-parser)](https://pypi.org/project/search-engine-parser/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/search-engine-parser)](https://pypi.org/project/search-engine-parser/)
-[![Tests](https://github.com/search-engine-parser/search-engine-parser/actions/workflows/test.yml/badge.svg)](https://github.com/search-engine-parser/search-engine-parser/actions/workflows/test.yml)
-[![Lint](https://github.com/search-engine-parser/search-engine-parser/actions/workflows/lint.yml/badge.svg)](https://github.com/search-engine-parser/search-engine-parser/actions/workflows/lint.yml)
-[![codecov](https://codecov.io/gh/search-engine-parser/search-engine-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/search-engine-parser/search-engine-parser)
+[![Tests](https://github.com/getlinksc/search-engine-parser/actions/workflows/test.yml/badge.svg)](https://github.com/getlinksc/search-engine-parser/actions/workflows/test.yml)
+[![Lint](https://github.com/getlinksc/search-engine-parser/actions/workflows/lint.yml/badge.svg)](https://github.com/getlinksc/search-engine-parser/actions/workflows/lint.yml)
+[![codecov](https://codecov.io/gh/getlinksc/search-engine-parser/branch/main/graph/badge.svg)](https://codecov.io/gh/getlinksc/search-engine-parser)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
