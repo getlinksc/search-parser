@@ -39,7 +39,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload coverage HTML artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: matrix.python-version == '3.11'
         with:
           name: coverage-report
