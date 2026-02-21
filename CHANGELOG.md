@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-02-21
+
+### Changed
+
+- Renamed all stale `search_engine_parser` references to `search_parser` across config, docs, and CI workflows.
+- Fixed `pyproject.toml`: CLI entry point, hatch build target, and mypy `files` path all now point to `src/search_parser`.
+- Synced `__version__.py` to match `pyproject.toml`.
+
+---
+
 ## [0.2.0] - 2026-02-20
 
 ### Added

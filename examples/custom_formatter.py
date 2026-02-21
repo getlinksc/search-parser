@@ -5,9 +5,9 @@ from __future__ import annotations
 import csv
 import io
 
-from search_engine_parser.core.models import SearchResults
-from search_engine_parser.formatters.base import BaseFormatter
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.core.models import SearchResults
+from search_parser.formatters.base import BaseFormatter
+from search_parser.parsers.google import GoogleParser
 
 
 class CSVFormatter(BaseFormatter):

@@ -4,16 +4,16 @@ This guide walks you through adding support for a new search engine.
 
 ## Step 1: Create the Parser
 
-Create `src/search_engine_parser/parsers/myengine.py`:
+Create `src/search_parser/parsers/myengine.py`:
 
 ```python
 from __future__ import annotations
 
 from bs4 import BeautifulSoup, Tag
 
-from search_engine_parser.core.models import SearchResult, SearchResults
-from search_engine_parser.parsers.base import BaseParser
-from search_engine_parser.utils import clean_text, make_soup
+from search_parser.core.models import SearchResult, SearchResults
+from search_parser.parsers.base import BaseParser
+from search_parser.utils import clean_text, make_soup
 
 
 class MyEngineParser(BaseParser):
@@ -58,14 +58,14 @@ class MyEngineParser(BaseParser):
 
 - `results` must contain **organic results only**. Sponsored ads go in `sponsored`, featured snippets in `featured_snippet`, etc.
 - Return an empty `SearchResults` (with `results=[]`) on malformed HTML — never raise.
-- Use `clean_text()` from `search_engine_parser.utils` to normalize whitespace.
+- Use `clean_text()` from `search_parser.utils` to normalize whitespace.
 
 ## Step 2: Register the Parser
 
-Add to `src/search_engine_parser/parsers/__init__.py`:
+Add to `src/search_parser/parsers/__init__.py`:
 
 ```python
-from search_engine_parser.parsers.myengine import MyEngineParser
+from search_parser.parsers.myengine import MyEngineParser
 
 PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     "google": GoogleParser,
@@ -105,5 +105,5 @@ Run the full test suite and linting before submitting:
 ```bash
 uv run pytest
 uv run ruff check .
-uv run mypy src/search_engine_parser
+uv run mypy src/search_parser
 ```

@@ -23,7 +23,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run pytest --cov=search_engine_parser --cov-report=term --cov-report=json
+          uv run pytest --cov=search_parser --cov-report=term --cov-report=json
           COVERAGE=$(python -c "import json; print(int(float(json.load(open('coverage.json'))['totals']['percent_covered_display'])))")
           echo "COVERAGE=${COVERAGE}%" >> $GITHUB_ENV
           if [ "$COVERAGE" -ge 90 ]; then echo "COVERAGE_COLOR=brightgreen" >> $GITHUB_ENV;

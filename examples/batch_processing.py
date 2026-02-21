@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 

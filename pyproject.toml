@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "search-parser"
-version = "0.2.0"
-description = "Parse search engine HTML results into structured data"
+version = "0.3.0"
+description = "Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or dict — with auto-detection"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
@@ -59,7 +59,7 @@ Issues = "https://github.com/getlinksc/search-parser/issues"
 Changelog = "https://github.com/getlinksc/search-parser/blob/main/CHANGELOG.md"
 
 [project.scripts]
-search-parser = "search_engine_parser.cli:main"
+search-parser = "search_parser.cli:main"
 
 [dependency-groups]
 dev = [
@@ -73,7 +73,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/search_engine_parser"]
+packages = ["src/search_parser"]
 
 [tool.ruff]
 line-length = 100
@@ -106,7 +106,7 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-files = ["src/search_engine_parser"]
+files = ["src/search_parser"]
 
 [[tool.mypy.overrides]]
 module = "bs4.*"

@@ -7,9 +7,9 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
-from search_engine_parser.core.models import SearchResult, SearchResults
-from search_engine_parser.parsers.base import BaseParser
-from search_engine_parser.utils import clean_text, make_soup
+from search_parser.core.models import SearchResult, SearchResults
+from search_parser.parsers.base import BaseParser
+from search_parser.utils import clean_text, make_soup
 
 logger = logging.getLogger(__name__)
 

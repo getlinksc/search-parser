@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from search_engine_parser.core.models import SearchResults
+from search_parser.core.models import SearchResults
 
 
 class BaseFormatter(ABC):

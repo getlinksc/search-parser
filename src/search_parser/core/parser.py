@@ -6,17 +6,17 @@ import json
 import logging
 from typing import Any, Literal
 
-from search_engine_parser.core.detector import SearchEngineDetector
-from search_engine_parser.core.models import SearchResults
-from search_engine_parser.exceptions import (
+from search_parser.core.detector import SearchEngineDetector
+from search_parser.core.models import SearchResults
+from search_parser.exceptions import (
     ParseError,
     ParserNotFoundError,
     SearchEngineDetectionError,
 )
-from search_engine_parser.formatters.json_formatter import JSONFormatter
-from search_engine_parser.formatters.markdown_formatter import MarkdownFormatter
-from search_engine_parser.parsers import PARSER_REGISTRY
-from search_engine_parser.parsers.base import BaseParser
+from search_parser.formatters.json_formatter import JSONFormatter
+from search_parser.formatters.markdown_formatter import MarkdownFormatter
+from search_parser.parsers import PARSER_REGISTRY
+from search_parser.parsers.base import BaseParser
 
 logger = logging.getLogger(__name__)
 

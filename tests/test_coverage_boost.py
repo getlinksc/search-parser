@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from search_engine_parser.core.detector import SearchEngineDetector
-from search_engine_parser.core.models import SearchResult, SearchResults
-from search_engine_parser.core.parser import SearchParser
-from search_engine_parser.exceptions import ParseError
-from search_engine_parser.formatters.markdown_formatter import MarkdownFormatter
-from search_engine_parser.parsers.bing import BingParser
-from search_engine_parser.parsers.duckduckgo import DuckDuckGoParser
-from search_engine_parser.parsers.google import GoogleParser
-from search_engine_parser.utils import clean_text, make_soup
+from search_parser.core.detector import SearchEngineDetector
+from search_parser.core.models import SearchResult, SearchResults
+from search_parser.core.parser import SearchParser
+from search_parser.exceptions import ParseError
+from search_parser.formatters.markdown_formatter import MarkdownFormatter
+from search_parser.parsers.bing import BingParser
+from search_parser.parsers.duckduckgo import DuckDuckGoParser
+from search_parser.parsers.google import GoogleParser
+from search_parser.utils import clean_text, make_soup
 
 # --- Utils tests ---
 

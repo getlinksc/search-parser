@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from search_engine_parser.core.detector import SearchEngineDetector
+from search_parser.core.detector import SearchEngineDetector
 
 
 class TestSearchEngineDetector:

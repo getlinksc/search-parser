@@ -14,7 +14,7 @@ Parse search engine HTML results into structured data (JSON, Markdown) with auto
 ## Quick Start
 
 ```python
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 
@@ -45,7 +45,7 @@ for q in data["people_also_ask"]:
 Or work directly with the typed model and use `to_json()` / `to_markdown()`:
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 results = GoogleParser().parse(html_string)
 
@@ -54,7 +54,7 @@ print(results.total_results)
 print(results.featured_snippet.title if results.featured_snippet else "no snippet")
 
 json_str = results.to_json()
-md_str   = results.to_markdown()
+md_str = results.to_markdown()
 ```
 
 ## Supported Result Types

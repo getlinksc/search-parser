@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from search_engine_parser.cli import main
+from search_parser.cli import main
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 

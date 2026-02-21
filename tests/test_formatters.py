@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
-from search_engine_parser.core.models import SearchResult, SearchResults
-from search_engine_parser.formatters.json_formatter import JSONFormatter
-from search_engine_parser.formatters.markdown_formatter import MarkdownFormatter
+from search_parser.core.models import SearchResult, SearchResults
+from search_parser.formatters.json_formatter import JSONFormatter
+from search_parser.formatters.markdown_formatter import MarkdownFormatter
 
 
 def _make_results() -> SearchResults:

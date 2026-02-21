@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from bs4 import BeautifulSoup, Tag
 
-from search_engine_parser.core.models import SearchResults
+from search_parser.core.models import SearchResults
 
 
 class BaseParser(ABC):

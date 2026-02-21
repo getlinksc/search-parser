@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from search_engine_parser.parsers.bing import BingParser
-from search_engine_parser.utils import make_soup
+from search_parser.parsers.bing import BingParser
+from search_parser.utils import make_soup
 
 
 class TestBingParser:
