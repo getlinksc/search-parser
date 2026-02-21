@@ -51,6 +51,23 @@ class GoogleParser(BaseParser):
         if featured:
             results.append(featured)
 
+        # Extract AI Overview
+        ai_overview = self._extract_ai_overview(soup)
+        if ai_overview:
+            results.append(ai_overview)
+
+        # Extract People Also Ask
+        results.extend(self._extract_people_also_ask(soup))
+
+        # Extract What People Are Saying
+        results.extend(self._extract_people_saying(soup))
+
+        # Extract People Also Search For
+        results.extend(self._extract_people_also_search(soup))
+
+        # Extract Find Related Products & Services
+        results.extend(self._extract_related_products(soup))
+
         # Extract organic results
         for item in self._find_organic_results(soup):
             result = self._parse_organic_result(item, position)
@@ -190,6 +207,141 @@ class GoogleParser(BaseParser):
             position=0,
             result_type="sponsored",
         )
+
+    def _extract_ai_overview(self, soup: BeautifulSoup) -> SearchResult | None:
+        """Extract AI Overview section if present."""
+        container = soup.find("div", class_="YzCcne")
+        if not isinstance(container, Tag):
+            return None
+
+        content_div = container.find("div", class_="mZJni")
+        if not isinstance(content_div, Tag):
+            return None
+
+        description = clean_text(content_div.get_text())
+        if not description:
+            return None
+
+        sources: list[dict[str, str]] = []
+        for link in container.find_all("a", href=True):
+            if not isinstance(link, Tag):
+                continue
+            href = str(link.get("href", ""))
+            text = clean_text(link.get_text())
+            if href.startswith("http") and text:
+                sources.append({"title": text, "url": href})
+
+        return SearchResult(
+            title="AI Overview",
+            url="",
+            description=description,
+            position=0,
+            result_type="ai_overview",
+            metadata={"sources": sources},
+        )
+
+    def _extract_people_also_ask(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract People Also Ask questions."""
+        results: list[SearchResult] = []
+        for item in soup.find_all("div", class_="related-question-pair"):
+            if not isinstance(item, Tag):
+                continue
+            question = str(item.get("data-q", ""))
+            if not question:
+                span = item.find("span", class_="CSkcDe")
+                if isinstance(span, Tag):
+                    question = clean_text(span.get_text())
+            if question:
+                results.append(
+                    SearchResult(
+                        title=question,
+                        url="",
+                        description=None,
+                        position=0,
+                        result_type="people_also_ask",
+                    )
+                )
+        return results
+
+    def _extract_people_saying(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract 'What People Are Saying' social posts."""
+        results: list[SearchResult] = []
+        section = soup.find("g-section-with-header", class_="yG4QQe")
+        if not isinstance(section, Tag):
+            return results
+        for post in section.find_all("div", class_="dz3f7e"):
+            if not isinstance(post, Tag):
+                continue
+            link = post.find("a", class_="WlydOe")
+            if not isinstance(link, Tag):
+                continue
+            url = str(link.get("href", ""))
+            text_div = post.find("div", class_="eAaXgc")
+            title = clean_text(text_div.get_text()) if isinstance(text_div, Tag) else ""
+            if url:
+                results.append(
+                    SearchResult(
+                        title=title or url,
+                        url=url,
+                        description=None,
+                        position=0,
+                        result_type="people_saying",
+                    )
+                )
+        return results
+
+    def _extract_people_also_search(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract 'People Also Search For' carousel items."""
+        results: list[SearchResult] = []
+        outer = soup.find("div", class_="oIk2Cb")
+        if not isinstance(outer, Tag):
+            return results
+        carousel = outer.find("div", class_="XNfAUb")
+        if not isinstance(carousel, Tag):
+            return results
+        for item in carousel.find_all("div", class_="XRVJtc"):
+            if not isinstance(item, Tag):
+                continue
+            link = item.find("a", class_="qrtwm")
+            span = item.find("span", class_="Yt787")
+            if not isinstance(link, Tag) or not isinstance(span, Tag):
+                continue
+            url = str(link.get("href", ""))
+            title = clean_text(span.get_text())
+            if title:
+                results.append(
+                    SearchResult(
+                        title=title,
+                        url=url,
+                        description=None,
+                        position=0,
+                        result_type="people_also_search",
+                    )
+                )
+        return results
+
+    def _extract_related_products(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract 'Find Related Products & Services' ad suggestions."""
+        results: list[SearchResult] = []
+        container = soup.find("div", id="HbKV2c")
+        if not isinstance(container, Tag):
+            return results
+        for link in container.find_all("a", href=True):
+            if not isinstance(link, Tag):
+                continue
+            url = str(link.get("href", ""))
+            title = clean_text(link.get_text())
+            if title and url:
+                results.append(
+                    SearchResult(
+                        title=title,
+                        url=url,
+                        description=None,
+                        position=0,
+                        result_type="related_products",
+                    )
+                )
+        return results
 
     def _extract_featured_snippet(self, soup: BeautifulSoup) -> SearchResult | None:
         """Extract featured snippet if present."""
