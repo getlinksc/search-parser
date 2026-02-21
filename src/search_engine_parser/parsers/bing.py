@@ -41,21 +41,15 @@ class BingParser(BaseParser):
     def parse(self, html: str) -> SearchResults:
         """Parse Bing search results HTML."""
         soup = make_soup(html)
-        results: list[SearchResult] = []
+        organic: list[SearchResult] = []
         position = 1
 
-        # Extract featured snippet
-        featured = self._extract_featured_snippet(soup)
-        if featured:
-            results.append(featured)
-
-        # Extract organic results
         for item in soup.find_all("li", class_="b_algo"):
             if not isinstance(item, Tag):
                 continue
             result = self._parse_organic_result(item, position)
             if result:
-                results.append(result)
+                organic.append(result)
                 position += 1
 
         query = self.extract_query(soup)
@@ -64,7 +58,8 @@ class BingParser(BaseParser):
         return SearchResults(
             search_engine=self.engine_name,
             query=query,
-            results=results,
+            results=organic,
+            featured_snippet=self._extract_featured_snippet(soup),
             detection_confidence=confidence,
         )
 

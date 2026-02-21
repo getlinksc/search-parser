@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 
 from bs4 import BeautifulSoup, Tag
 
@@ -39,49 +40,31 @@ class GoogleParser(BaseParser):
     def parse(self, html: str) -> SearchResults:
         """Parse Google search results HTML."""
         soup = make_soup(html)
-        results: list[SearchResult] = []
         position = 1
 
-        # Extract sponsored results
-        sponsored = self._extract_sponsored_results(soup)
-        results.extend(sponsored)
-
-        # Extract featured snippet
-        featured = self._extract_featured_snippet(soup)
-        if featured:
-            results.append(featured)
-
-        # Extract AI Overview
-        ai_overview = self._extract_ai_overview(soup)
-        if ai_overview:
-            results.append(ai_overview)
-
-        # Extract People Also Ask
-        results.extend(self._extract_people_also_ask(soup))
-
-        # Extract What People Are Saying
-        results.extend(self._extract_people_saying(soup))
-
-        # Extract People Also Search For
-        results.extend(self._extract_people_also_search(soup))
-
-        # Extract Find Related Products & Services
-        results.extend(self._extract_related_products(soup))
-
-        # Extract organic results
+        organic: list[SearchResult] = []
         for item in self._find_organic_results(soup):
             result = self._parse_organic_result(item, position)
             if result:
-                results.append(result)
+                organic.append(result)
                 position += 1
 
         query = self.extract_query(soup)
         confidence = self.can_parse(soup)
+        total_results = self._extract_total_results(soup)
 
         return SearchResults(
             search_engine=self.engine_name,
             query=query,
-            results=results,
+            results=organic,
+            total_results=total_results,
+            sponsored=self._extract_sponsored_results(soup),
+            featured_snippet=self._extract_featured_snippet(soup),
+            ai_overview=self._extract_ai_overview(soup),
+            people_also_ask=self._extract_people_also_ask(soup),
+            people_saying=self._extract_people_saying(soup),
+            people_also_search=self._extract_people_also_search(soup),
+            related_products=self._extract_related_products(soup),
             detection_confidence=confidence,
         )
 
@@ -207,6 +190,24 @@ class GoogleParser(BaseParser):
             position=0,
             result_type="sponsored",
         )
+
+    def _extract_total_results(self, soup: BeautifulSoup) -> int | None:
+        """Extract Google's 'About X results' count from result-stats div."""
+        stats_div = soup.find("div", id="result-stats")
+        if not isinstance(stats_div, Tag):
+            return None
+        # Remove the <nobr> timing element, e.g. "(0.40 seconds)"
+        nobr = stats_div.find("nobr")
+        if isinstance(nobr, Tag):
+            nobr.decompose()
+        text = stats_div.get_text()
+        match = re.search(r"([\d,]+)\s+results", text)
+        if not match:
+            return None
+        try:
+            return int(match.group(1).replace(",", ""))
+        except ValueError:
+            return None
 
     def _extract_ai_overview(self, soup: BeautifulSoup) -> SearchResult | None:
         """Extract AI Overview section if present."""
