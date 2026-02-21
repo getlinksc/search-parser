@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "search-parser"
-version = "0.0.2"
+version = "0.2.0"
 description = "Parse search engine HTML results into structured data"
 readme = "README.md"
 requires-python = ">=3.10"
