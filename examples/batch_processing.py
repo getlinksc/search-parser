@@ -22,10 +22,20 @@ def process_directory(input_dir: str, output_dir: str) -> None:
         html = html_file.read_text(encoding="utf-8")
 
         try:
-            result = parser.parse(html, output_format="dict")
+            data = parser.parse(html, output_format="dict")
             output_file = output_path / f"{html_file.stem}.json"
-            output_file.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
-            print(f"  -> Saved {len(result['results'])} results to {output_file.name}")
+            output_file.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
+
+            n_organic = len(data["results"])
+            n_sponsored = len(data["sponsored"])
+            has_snippet = data["featured_snippet"] is not None
+            has_ai = data["ai_overview"] is not None
+            print(
+                f"  -> {n_organic} organic, {n_sponsored} sponsored"
+                + (", featured snippet" if has_snippet else "")
+                + (", AI overview" if has_ai else "")
+                + f" — saved to {output_file.name}"
+            )
         except Exception as e:
             print(f"  -> Error: {e}")
 

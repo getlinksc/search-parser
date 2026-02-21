@@ -5,7 +5,9 @@ Parse search engine HTML results into structured data (JSON, Markdown) with auto
 ## Features
 
 - **Auto-detection** of Google, Bing, and DuckDuckGo HTML
+- **Dedicated fields** for every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, and more
 - **Multiple output formats**: JSON, Markdown, Python dict
+- **Convenience methods**: `results.to_json()` and `results.to_markdown()` directly on the model
 - **Extensible** plugin architecture for adding new search engines
 - **Type-safe** with Pydantic models and full type hints
 
@@ -23,13 +25,47 @@ json_output = parser.parse(html_string)
 markdown_output = parser.parse(html_string, output_format="markdown")
 
 # Get Python dict for programmatic access
-dict_output = parser.parse(html_string, output_format="dict")
+data = parser.parse(html_string, output_format="dict")
+
+# Organic results
+for result in data["results"]:
+    print(result["title"], result["url"])
+
+# Dedicated fields — no filtering needed
+if data["featured_snippet"]:
+    print(data["featured_snippet"]["title"])
+
+if data["ai_overview"]:
+    print(data["ai_overview"]["description"])
+
+for q in data["people_also_ask"]:
+    print(q["title"])
 ```
 
-## Supported Search Engines
+Or work directly with the typed model and use `to_json()` / `to_markdown()`:
 
-| Engine | Organic Results | Featured Snippets | Auto-Detection |
-|--------|:-:|:-:|:-:|
-| Google | Yes | Yes | Yes |
-| Bing | Yes | Yes | Yes |
-| DuckDuckGo | Yes | - | Yes |
+```python
+from search_engine_parser.parsers.google import GoogleParser
+
+results = GoogleParser().parse(html_string)
+
+print(results.query)
+print(results.total_results)
+print(results.featured_snippet.title if results.featured_snippet else "no snippet")
+
+json_str = results.to_json()
+md_str   = results.to_markdown()
+```
+
+## Supported Result Types
+
+| Result Type | Field | Google | Bing | DuckDuckGo |
+|---|---|:-:|:-:|:-:|
+| Organic results | `results` | ✓ | ✓ | ✓ |
+| Featured snippet | `featured_snippet` | ✓ | ✓ | — |
+| Sponsored / ads | `sponsored` | ✓ | — | — |
+| AI Overview | `ai_overview` | ✓ | — | — |
+| People Also Ask | `people_also_ask` | ✓ | — | — |
+| What People Are Saying | `people_saying` | ✓ | — | — |
+| People Also Search For | `people_also_search` | ✓ | — | — |
+| Related Products & Services | `related_products` | ✓ | — | — |

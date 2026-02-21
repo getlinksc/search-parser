@@ -29,7 +29,7 @@ class MyEngineParser(BaseParser):
 
     def parse(self, html: str) -> SearchResults:
         soup = make_soup(html)
-        results: list[SearchResult] = []
+        organic: list[SearchResult] = []
         position = 1
 
         for item in soup.find_all("div", class_="result"):
@@ -41,18 +41,24 @@ class MyEngineParser(BaseParser):
             title = clean_text(link.get_text())
             url = str(link.get("href", ""))
             if title and url:
-                results.append(SearchResult(
-                    title=title, url=url, position=position, result_type="organic"
-                ))
+                organic.append(
+                    SearchResult(title=title, url=url, position=position, result_type="organic")
+                )
                 position += 1
 
         return SearchResults(
             search_engine=self.engine_name,
             query=self.extract_query(soup),
-            results=results,
+            results=organic,
             detection_confidence=self.can_parse(soup),
         )
 ```
+
+**Key conventions:**
+
+- `results` must contain **organic results only**. Sponsored ads go in `sponsored`, featured snippets in `featured_snippet`, etc.
+- Return an empty `SearchResults` (with `results=[]`) on malformed HTML — never raise.
+- Use `clean_text()` from `search_engine_parser.utils` to normalize whitespace.
 
 ## Step 2: Register the Parser
 
@@ -75,11 +81,22 @@ Create `tests/fixtures/myengine/organic_results.html` with sample HTML.
 
 ## Step 4: Write Tests
 
-Create `tests/unit/test_myengine_parser.py` with tests for:
+Create `tests/unit/test_myengine_parser.py`. Cover:
+
 - `engine_name` property
-- `can_parse()` with matching and non-matching HTML
-- `parse()` with your fixture HTML
-- Edge cases (empty results, malformed HTML)
+- `can_parse()` returns a high score for matching HTML and `0.0` for non-matching
+- `parse()` returns only organic results in `results`
+- Edge cases: empty results, malformed HTML, missing fields
+- Confirm non-organic types (if supported) appear in their dedicated fields, not in `results`
+
+Example assertion pattern:
+
+```python
+def test_organic_results_only(self, myengine_html: str) -> None:
+    results = self.parser.parse(myengine_html)
+    for r in results.results:
+        assert r.result_type == "organic"
+```
 
 ## Step 5: Submit a PR
 
