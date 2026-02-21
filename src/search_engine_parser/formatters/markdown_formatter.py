@@ -40,20 +40,14 @@ class MarkdownFormatter(BaseFormatter):
         lines.append("---")
         lines.append("")
 
-        # Group results by type
-        featured = [r for r in results.results if r.result_type == "featured_snippet"]
-        organic = [r for r in results.results if r.result_type == "organic"]
-        knowledge = [r for r in results.results if r.result_type == "knowledge_panel"]
-        news = [r for r in results.results if r.result_type == "news"]
-
-        if featured:
+        if results.featured_snippet:
             lines.append("## Featured Snippet")
             lines.append("")
-            for result in featured:
-                lines.extend(self._format_featured(result))
+            lines.extend(self._format_featured(results.featured_snippet))
             lines.append("---")
             lines.append("")
 
+        knowledge = [r for r in results.results if r.result_type == "knowledge_panel"]
         if knowledge:
             lines.append("## Knowledge Panel")
             lines.append("")
@@ -62,12 +56,14 @@ class MarkdownFormatter(BaseFormatter):
             lines.append("---")
             lines.append("")
 
+        organic = [r for r in results.results if r.result_type == "organic"]
         if organic:
             lines.append("## Organic Results")
             lines.append("")
             for result in organic:
                 lines.extend(self._format_organic(result))
 
+        news = [r for r in results.results if r.result_type == "news"]
         if news:
             lines.append("## News Results")
             lines.append("")

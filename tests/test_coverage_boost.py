@@ -267,9 +267,24 @@ class TestBingEdgeCases:
         """
         parser = BingParser()
         results = parser.parse(html)
-        featured = [r for r in results.results if r.result_type == "featured_snippet"]
-        assert len(featured) == 1
-        assert featured[0].title == "Featured Title"
+        assert results.featured_snippet is not None
+        assert results.featured_snippet.title == "Featured Title"
+        assert results.featured_snippet.result_type == "featured_snippet"
+
+    def test_featured_snippet_not_in_organic(self) -> None:
+        html = """
+        <html><head><meta name="ms.application" content="Bing"></head>
+        <body>
+            <div class="b_ans">
+                <h2><a href="https://example.com">Featured Title</a></h2>
+                <div class="b_rich">Featured description text</div>
+            </div>
+        </body></html>
+        """
+        parser = BingParser()
+        results = parser.parse(html)
+        for r in results.results:
+            assert r.result_type != "featured_snippet"
 
     def test_featured_snippet_no_h2(self) -> None:
         html = """
@@ -282,8 +297,7 @@ class TestBingEdgeCases:
         """
         parser = BingParser()
         results = parser.parse(html)
-        featured = [r for r in results.results if r.result_type == "featured_snippet"]
-        assert len(featured) == 0
+        assert results.featured_snippet is None
 
     def test_featured_snippet_fallback_to_p(self) -> None:
         html = """
@@ -297,8 +311,7 @@ class TestBingEdgeCases:
         """
         parser = BingParser()
         results = parser.parse(html)
-        featured = [r for r in results.results if r.result_type == "featured_snippet"]
-        assert len(featured) == 1
+        assert results.featured_snippet is not None
 
 
 # --- DuckDuckGo edge cases ---
@@ -444,14 +457,13 @@ class TestMarkdownFormatterEdgeCases:
     def test_format_featured_no_description(self) -> None:
         results = SearchResults(
             search_engine="google",
-            results=[
-                SearchResult(
-                    title="Featured Title",
-                    url="https://example.com",
-                    position=0,
-                    result_type="featured_snippet",
-                ),
-            ],
+            featured_snippet=SearchResult(
+                title="Featured Title",
+                url="https://example.com",
+                position=0,
+                result_type="featured_snippet",
+            ),
+            results=[],
             detection_confidence=0.9,
         )
         output = self.formatter.format(results)
