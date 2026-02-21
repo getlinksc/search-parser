@@ -19,12 +19,14 @@ class CSVFormatter(BaseFormatter):
         writer = csv.writer(output)
         writer.writerow(["position", "title", "url", "description"])
         for result in results.results:
-            writer.writerow([
-                result.position,
-                result.title,
-                result.url,
-                result.description or "",
-            ])
+            writer.writerow(
+                [
+                    result.position,
+                    result.title,
+                    result.url,
+                    result.description or "",
+                ]
+            )
         return output.getvalue()
 
 

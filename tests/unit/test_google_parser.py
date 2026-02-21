@@ -149,15 +149,11 @@ class TestGoogleParser:
         assert results.search_engine == "google"
         assert len(results.results) == 0
 
-    def test_parse_need_javascript_has_no_query(
-        self, google_need_javascript_html: str
-    ) -> None:
+    def test_parse_need_javascript_has_no_query(self, google_need_javascript_html: str) -> None:
         results = self.parser.parse(google_need_javascript_html)
         assert results.query is None
 
-    def test_parse_need_javascript_low_confidence(
-        self, google_need_javascript_html: str
-    ) -> None:
+    def test_parse_need_javascript_low_confidence(self, google_need_javascript_html: str) -> None:
         soup = make_soup(google_need_javascript_html)
         confidence = self.parser.can_parse(soup)
         assert confidence == 0.0
@@ -292,12 +288,15 @@ class TestGoogleParser:
 
     # --- isolation check: non-organic types never leak into results ---
 
-    def test_all_dedicated_fields_absent_from_organic(
-        self, google_web_scraping_html: str
-    ) -> None:
+    def test_all_dedicated_fields_absent_from_organic(self, google_web_scraping_html: str) -> None:
         non_organic = {
-            "featured_snippet", "sponsored", "ai_overview",
-            "people_also_ask", "people_saying", "people_also_search", "related_products",
+            "featured_snippet",
+            "sponsored",
+            "ai_overview",
+            "people_also_ask",
+            "people_saying",
+            "people_also_search",
+            "related_products",
         }
         results = self.parser.parse(google_web_scraping_html)
         for r in results.results:
