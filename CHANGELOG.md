@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.2.0] - 2026-02-20
+
 ### Added
 
 - `SearchResults.to_json(indent=2)` — serialize results directly to a JSON string without going through `SearchParser`.
@@ -28,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `SearchResults.people_saying: list[SearchResult]` — social posts (new)
   - `SearchResults.people_also_search: list[SearchResult]` — related search items (new)
   - `SearchResults.related_products: list[SearchResult]` — product ad suggestions (new)
+
+### Fixed
+
+- **Security:** `SearchEngineDetector._check_url_patterns` replaced substring `in href` checks with `urlparse` hostname parsing against an explicit allowlist (`_ALLOWED_HOSTS`), preventing false positives from URLs like `http://evil.com/google.com`.
+- **Security:** `DuckDuckGoParser.can_parse` replaced `"duckduckgo.com" in href` substring check with `urlparse` hostname comparison (exact match or `.duckduckgo.com` subdomain).
+- **CI:** Added explicit `permissions: contents: read` blocks to `test.yml`, `lint.yml`, and `coverage-badge.yml` workflows to follow least-privilege GITHUB_TOKEN scoping.
 
 ### Migration
 
@@ -62,5 +72,6 @@ sponsored = results.sponsored         # list[SearchResult]
 - CI/CD workflows for testing, linting, coverage, and publishing.
 - Pre-commit hooks for ruff and mypy.
 
-[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/getlinksc/search-parser/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/getlinksc/search-parser/releases/tag/v0.1.0
