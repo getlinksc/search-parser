@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from search_engine_parser.__version__ import __version__
-from search_engine_parser.core.models import SearchResult, SearchResults
-from search_engine_parser.formatters.base import BaseFormatter
+from search_parser.__version__ import __version__
+from search_parser.core.models import SearchResult, SearchResults
+from search_parser.formatters.base import BaseFormatter
 
 
 class MarkdownFormatter(BaseFormatter):

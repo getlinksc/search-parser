@@ -15,7 +15,7 @@ Brief description of the changes.
 - [ ] I have added tests that prove my fix/feature works
 - [ ] All new and existing tests pass (`uv run pytest`)
 - [ ] Linting passes (`uv run ruff check .`)
-- [ ] Type checking passes (`uv run mypy src/search_engine_parser`)
+- [ ] Type checking passes (`uv run mypy src/search_parser`)
 - [ ] I have updated documentation as needed
 
 ## Test Plan

@@ -16,8 +16,8 @@ except ImportError:
     )
     sys.exit(1)
 
-from search_engine_parser.core.parser import SearchParser
-from search_engine_parser.exceptions import SearchEngineParserError
+from search_parser.core.parser import SearchParser
+from search_parser.exceptions import SearchEngineParserError
 
 
 @click.command()

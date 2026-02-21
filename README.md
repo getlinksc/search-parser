@@ -8,7 +8,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**Parse search engine HTML results into structured data (JSON, Markdown) with auto-detection.**
+**Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or Python dict — with automatic search engine detection.**
 
 `search-parser` takes raw HTML from Google, Bing, and DuckDuckGo and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
@@ -17,7 +17,7 @@
 ## Quick Start
 
 ```python
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 html = open("google_results.html").read()
@@ -130,7 +130,7 @@ print(data["detection_confidence"]) # 0.95
 When you need the typed `SearchResults` object instead of a dict, call the engine parser directly. The model exposes `to_json()` and `to_markdown()` convenience methods:
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 parser = GoogleParser()
 results = parser.parse(html)  # returns SearchResults
@@ -138,7 +138,7 @@ results = parser.parse(html)  # returns SearchResults
 # Typed access — no dict key lookups
 print(results.query)
 print(results.total_results)
-print(len(results.results))          # organic count
+print(len(results.results))  # organic count
 
 if results.featured_snippet:
     print(results.featured_snippet.title)
@@ -154,9 +154,9 @@ for post in results.people_saying:
     print(post.title, post.url)
 
 # Convert to JSON or Markdown directly on the model
-json_str  = results.to_json()
-json_str  = results.to_json(indent=4)  # custom indent
-md_str    = results.to_markdown()
+json_str = results.to_json()
+json_str = results.to_json(indent=4)  # custom indent
+md_str = results.to_markdown()
 ```
 
 ---

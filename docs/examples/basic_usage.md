@@ -3,7 +3,7 @@
 ## Parsing Search Results
 
 ```python
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 
@@ -30,13 +30,13 @@ When you use an engine parser directly, the returned `SearchResults` object has
 `to_json()` and `to_markdown()` methods:
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 results = GoogleParser().parse(html)
 
-json_str = results.to_json()          # same as JSONFormatter().format(results)
+json_str = results.to_json()  # same as JSONFormatter().format(results)
 json_str = results.to_json(indent=4)  # custom indentation
-md_str   = results.to_markdown()      # same as MarkdownFormatter().format(results)
+md_str = results.to_markdown()  # same as MarkdownFormatter().format(results)
 ```
 
 ## Accessing Result Types

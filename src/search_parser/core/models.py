@@ -76,7 +76,7 @@ class SearchResults(BaseModel):
             Markdown string with sections for each result type present.
         """
         # Deferred import avoids a circular dependency (MarkdownFormatter imports models).
-        from search_engine_parser.formatters.markdown_formatter import (
+        from search_parser.formatters.markdown_formatter import (
             MarkdownFormatter,  # noqa: PLC0415
         )
 

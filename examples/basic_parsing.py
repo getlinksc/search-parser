@@ -1,7 +1,7 @@
 """Basic example: parse search engine HTML into different formats."""
 
-from search_engine_parser import SearchParser
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser import SearchParser
+from search_parser.parsers.google import GoogleParser
 
 # Sample Google HTML (in real usage, load from a file or API response)
 SAMPLE_HTML = """

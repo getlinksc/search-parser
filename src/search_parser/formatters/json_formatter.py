@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from search_engine_parser.core.models import SearchResults
-from search_engine_parser.formatters.base import BaseFormatter
+from search_parser.core.models import SearchResults
+from search_parser.formatters.base import BaseFormatter
 
 
 class JSONFormatter(BaseFormatter):

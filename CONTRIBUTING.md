@@ -45,7 +45,7 @@ Adding support for a new search engine is straightforward. Follow these steps:
 
 ### Step 1: Create the parser module
 
-Create a new file at `src/search_engine_parser/engines/<engine_name>.py`:
+Create a new file at `src/search_parser/parsers/<engine_name>.py`:
 
 ```python
 """Parser for <EngineName> search results."""
@@ -56,7 +56,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup, Tag
 
-from search_engine_parser.engines.base import BaseParser, SearchResult
+from search_parser.engines.base import BaseParser, SearchResult
 
 
 class EnginNameParser(BaseParser):
@@ -84,10 +84,10 @@ class EnginNameParser(BaseParser):
 
 ### Step 2: Register the parser
 
-Add your parser to the engine registry in `src/search_engine_parser/engines/__init__.py`:
+Add your parser to the engine registry in `src/search_parser/parsers/__init__.py`:
 
 ```python
-from search_engine_parser.engines.engine_name import EngineNameParser
+from search_parser.engines.engine_name import EngineNameParser
 
 ENGINES: list[type[BaseParser]] = [
     GoogleParser,
@@ -118,7 +118,7 @@ Create `tests/engines/test_<engine_name>.py`:
 import json
 from pathlib import Path
 
-from search_engine_parser.engines.engine_name import EngineNameParser
+from search_parser.engines.engine_name import EngineNameParser
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "<engine_name>"
 
@@ -176,7 +176,7 @@ Key style rules:
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=search_engine_parser --cov-report=term-missing
+uv run pytest --cov=search_parser --cov-report=term-missing
 
 # Run a specific test file
 uv run pytest tests/engines/test_google.py

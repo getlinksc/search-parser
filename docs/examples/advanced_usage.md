@@ -5,7 +5,7 @@
 ```python
 import json
 from pathlib import Path
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 
@@ -22,8 +22,8 @@ for html_file in Path("html_files").glob("*.html"):
 ```python
 import csv
 import io
-from search_engine_parser.core.models import SearchResults
-from search_engine_parser.formatters.base import BaseFormatter
+from search_parser.core.models import SearchResults
+from search_parser.formatters.base import BaseFormatter
 
 
 class CSVFormatter(BaseFormatter):
@@ -39,7 +39,7 @@ class CSVFormatter(BaseFormatter):
 Use it with the engine parser directly (which returns a `SearchResults` object):
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 results = GoogleParser().parse(html)
 csv_output = CSVFormatter().format(results)
@@ -50,7 +50,7 @@ csv_output = CSVFormatter().format(results)
 Each result type has its own field on `SearchResults` — no filtering by `result_type` needed:
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 results = GoogleParser().parse(html)
 
@@ -110,8 +110,8 @@ prompt = f"Summarize these search results:\n\n{results.to_markdown()}"
 ## Error Handling
 
 ```python
-from search_engine_parser import SearchParser
-from search_engine_parser.exceptions import (
+from search_parser import SearchParser
+from search_parser.exceptions import (
     SearchEngineDetectionError,
     ParserNotFoundError,
     ParseError,

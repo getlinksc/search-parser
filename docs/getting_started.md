@@ -20,7 +20,7 @@ pip install "search-parser[cli]"
 ## Basic Usage
 
 ```python
-from search_engine_parser import SearchParser
+from search_parser import SearchParser
 
 parser = SearchParser()
 
@@ -92,7 +92,7 @@ print(data["search_engine"])   # "google"
 When you want typed access and the `to_json()` / `to_markdown()` convenience methods, call the engine parser directly to get a `SearchResults` object:
 
 ```python
-from search_engine_parser.parsers.google import GoogleParser
+from search_parser.parsers.google import GoogleParser
 
 results = GoogleParser().parse(html)
 
@@ -100,7 +100,7 @@ results = GoogleParser().parse(html)
 print(results.query)
 print(results.total_results)
 
-for r in results.results:              # organic only
+for r in results.results:  # organic only
     print(r.title, r.url)
 
 if results.featured_snippet:
@@ -113,9 +113,9 @@ for q in results.people_also_ask:
     print(q.title)
 
 # Serialize without going through SearchParser
-json_str = results.to_json()           # JSON string, indent=2 by default
-json_str = results.to_json(indent=4)   # custom indent
-md_str   = results.to_markdown()       # Markdown string
+json_str = results.to_json()  # JSON string, indent=2 by default
+json_str = results.to_json(indent=4)  # custom indent
+md_str = results.to_markdown()  # Markdown string
 ```
 
 ## Specifying the Engine
