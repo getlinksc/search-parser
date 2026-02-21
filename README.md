@@ -10,33 +10,41 @@
 
 **Parse search engine HTML results into structured data (JSON, Markdown) with auto-detection.**
 
-`search-parser` takes raw HTML from popular search engines and extracts structured result data -- titles, URLs, snippets, and more -- into your preferred output format. It auto-detects the search engine from the HTML content, so you don't have to specify which parser to use.
+`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
 ---
 
 ## Quick Start
 
 ```python
-from search_engine_parser import parse
+from search_engine_parser import SearchParser
 
+parser = SearchParser()
 html = open("google_results.html").read()
 
-# JSON string
-json_output = parse(html, output_format="json")
-print(json_output)
-# [{"title": "Example Result", "url": "https://example.com", "snippet": "An example result..."}, ...]
+# JSON string (default)
+json_output = parser.parse(html)
 
-# Markdown string
-md_output = parse(html, output_format="markdown")
-print(md_output)
-# ## Example Result
-# **URL:** https://example.com
-# An example result...
+# Markdown string — great for feeding to an LLM
+md_output = parser.parse(html, output_format="markdown")
 
-# Python list of dicts (default)
-results = parse(html, output_format="dict")
-for result in results:
-    print(result["title"], result["url"])
+# Python dict — for programmatic access
+data = parser.parse(html, output_format="dict")
+
+# Organic results are in data["results"]
+for result in data["results"]:
+    print(f"{result['position']}. {result['title']}")
+    print(f"   {result['url']}")
+
+# Every other result type has its own dedicated key
+if data["featured_snippet"]:
+    print("Featured:", data["featured_snippet"]["title"])
+
+if data["ai_overview"]:
+    print("AI Overview:", data["ai_overview"]["description"][:100])
+
+for question in data["people_also_ask"]:
+    print("PAA:", question["title"])
 ```
 
 ---
@@ -57,102 +65,202 @@ pip install search-parser
 
 ---
 
-## Supported Search Engines
+## Supported Result Types
 
-| Search Engine | Auto-Detect | Status |
-|---------------|-------------|--------|
-| Google        | Yes         | Stable |
-| Bing          | Yes         | Stable |
-| DuckDuckGo    | Yes         | Stable |
+| Result Type | Field | Google | Bing | DuckDuckGo |
+|---|---|:-:|:-:|:-:|
+| Organic results | `results` | ✓ | ✓ | ✓ |
+| Featured snippet | `featured_snippet` | ✓ | ✓ | — |
+| Sponsored / ads | `sponsored` | ✓ | — | — |
+| AI Overview | `ai_overview` | ✓ | — | — |
+| People Also Ask | `people_also_ask` | ✓ | — | — |
+| What People Are Saying | `people_saying` | ✓ | — | — |
+| People Also Search For | `people_also_search` | ✓ | — | — |
+| Related Products & Services | `related_products` | ✓ | — | — |
 
-Each parser extracts the following fields (when available):
+---
 
-- `title` -- The result heading
-- `url` -- The link to the result page
-- `snippet` -- The text preview / description
-- `position` -- The result's rank on the page
+## Working with Results
+
+`SearchParser.parse()` with `output_format="dict"` returns the full `SearchResults` structure:
+
+```python
+data = parser.parse(html, output_format="dict")
+
+# Always a list (organic results only)
+for r in data["results"]:
+    print(r["title"], r["url"], r["description"])
+
+# None or a single object
+if data["featured_snippet"]:
+    print(data["featured_snippet"]["title"])
+
+# None or a single object with description + sources list
+if data["ai_overview"]:
+    overview = data["ai_overview"]
+    print(overview["description"])
+    for source in overview["metadata"]["sources"]:
+        print(f"  - {source['title']}: {source['url']}")
+
+# Always a list (empty when not present)
+for q in data["people_also_ask"]:
+    print(q["title"])
+
+for post in data["people_saying"]:
+    print(post["title"], post["url"])
+
+for item in data["people_also_search"]:
+    print(item["title"])
+
+for ad in data["sponsored"]:
+    print(ad["title"], ad["url"])
+
+for product in data["related_products"]:
+    print(product["title"])
+
+# Metadata
+print(data["search_engine"])        # "google"
+print(data["query"])                # "python web scraping"
+print(data["total_results"])        # 26200000 or None
+print(data["detection_confidence"]) # 0.95
+```
+
+### Using the model directly
+
+When you need the typed `SearchResults` object instead of a dict, call the engine parser directly. The model exposes `to_json()` and `to_markdown()` convenience methods:
+
+```python
+from search_engine_parser.parsers.google import GoogleParser
+
+parser = GoogleParser()
+results = parser.parse(html)  # returns SearchResults
+
+# Typed access — no dict key lookups
+print(results.query)
+print(results.total_results)
+print(len(results.results))          # organic count
+
+if results.featured_snippet:
+    print(results.featured_snippet.title)
+
+if results.ai_overview:
+    print(results.ai_overview.description)
+    sources = results.ai_overview.metadata["sources"]
+
+for q in results.people_also_ask:
+    print(q.title)
+
+for post in results.people_saying:
+    print(post.title, post.url)
+
+# Convert to JSON or Markdown directly on the model
+json_str  = results.to_json()
+json_str  = results.to_json(indent=4)  # custom indent
+md_str    = results.to_markdown()
+```
 
 ---
 
 ## Output Formats
 
-### JSON
+### JSON (`output_format="json"` or `results.to_json()`)
 
 ```json
-[
-  {
-    "position": 1,
-    "title": "Example Domain",
-    "url": "https://example.com",
-    "snippet": "This domain is for use in illustrative examples..."
+{
+  "search_engine": "google",
+  "query": "python web scraping",
+  "total_results": 26200000,
+  "results": [
+    {
+      "title": "Web Scraping with Python - Real Python",
+      "url": "https://realpython.com/python-web-scraping/",
+      "description": "Learn how to scrape websites with Python...",
+      "position": 1,
+      "result_type": "organic",
+      "metadata": {}
+    }
+  ],
+  "featured_snippet": null,
+  "ai_overview": {
+    "title": "AI Overview",
+    "url": "",
+    "description": "Python is a widely used language for web scraping...",
+    "position": 0,
+    "result_type": "ai_overview",
+    "metadata": {
+      "sources": [
+        {"title": "Beautiful Soup", "url": "https://www.crummy.com/software/BeautifulSoup/"},
+        {"title": "Requests", "url": "https://requests.readthedocs.io/"}
+      ]
+    }
   },
-  {
-    "position": 2,
-    "title": "Another Result",
-    "url": "https://another.example.com",
-    "snippet": "Another example snippet text..."
-  }
-]
+  "people_also_ask": [
+    {"title": "Is Python good for web scraping?", "url": "", "position": 0, "result_type": "people_also_ask", "metadata": {}}
+  ],
+  "sponsored": [],
+  "people_saying": [],
+  "people_also_search": [],
+  "related_products": [],
+  "detection_confidence": 0.95,
+  "parsed_at": "2026-02-21T00:00:00Z",
+  "metadata": {}
+}
 ```
 
-### Markdown
+### Markdown (`output_format="markdown"` or `results.to_markdown()`)
 
 ```markdown
-## 1. Example Domain
-**URL:** https://example.com
-This domain is for use in illustrative examples...
+# Search Results: python web scraping
+
+**Search Engine:** Google
+**Total Results:** ~26,200,000
+**Parsed:** 2026-02-21 00:00:00 UTC
 
 ---
 
-## 2. Another Result
-**URL:** https://another.example.com
-Another example snippet text...
-```
+## Featured Snippet
 
-### Dict (Python)
+### What is Web Scraping?
+Web scraping is the process of extracting data from websites...
 
-```python
-[
-    {
-        "position": 1,
-        "title": "Example Domain",
-        "url": "https://example.com",
-        "snippet": "This domain is for use in illustrative examples...",
-    },
-    {
-        "position": 2,
-        "title": "Another Result",
-        "url": "https://another.example.com",
-        "snippet": "Another example snippet text...",
-    },
-]
+**Source:** [https://example.com](https://example.com)
+
+---
+
+## Organic Results
+
+### 1. Web Scraping with Python - Real Python
+Learn how to scrape websites with Python...
+
+**URL:** https://realpython.com/python-web-scraping/
 ```
 
 ---
 
 ## CLI Usage
 
-`search-parser` includes a command-line interface for quick parsing:
-
 ```bash
-# Parse an HTML file to JSON (auto-detects search engine)
-search-parser parse results.html --format json
+# Parse an HTML file (auto-detects search engine, outputs JSON)
+search-parser parse results.html
 
-# Parse with explicit engine
-search-parser parse results.html --engine google --format markdown
+# Markdown output
+search-parser parse results.html --format markdown
+
+# Specify engine manually
+search-parser parse results.html --engine google --format json
 
 # Read from stdin
 cat results.html | search-parser parse - --format json
 
-# Output to a file
-search-parser parse results.html --format json --output results.json
+# Save to file
+search-parser parse results.html --output results.json
 ```
 
 ---
 
 ## Documentation
 
-Full documentation is available at [https://search-parser.github.io/search-parser/](https://search-parser.github.io/search-parser/).
+Full documentation: [https://search-parser.github.io/search-parser/](https://search-parser.github.io/search-parser/)
 
 - [Getting Started](https://search-parser.github.io/search-parser/getting_started/)
 - [API Reference](https://search-parser.github.io/search-parser/api_reference/)

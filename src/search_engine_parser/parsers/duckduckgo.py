@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -35,10 +36,14 @@ class DuckDuckGoParser(BaseParser):
         if soup.find_all("div", class_="result"):
             confidence = max(confidence, 0.5)
 
-        # Check for DDG-specific link patterns
+        # Check for DDG-specific link patterns (compare hostname, not substring)
         for link in soup.find_all("link"):
-            href = str(link.get("href", "")).lower()
-            if "duckduckgo.com" in href:
+            href = str(link.get("href", ""))
+            try:
+                host = urlparse(href).hostname or ""
+            except ValueError:
+                host = ""
+            if host == "duckduckgo.com" or host.endswith(".duckduckgo.com"):
                 confidence = max(confidence, 0.8)
 
         return confidence
