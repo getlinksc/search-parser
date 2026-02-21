@@ -31,6 +31,8 @@ coverage.xml
 *.cover
 .pytest_cache/
 
+integration_tests/*
+
 # mypy
 .mypy_cache/
 

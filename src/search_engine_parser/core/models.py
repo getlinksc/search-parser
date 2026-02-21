@@ -16,7 +16,17 @@ class SearchResult(BaseModel):
     description: Optional[str] = None  # noqa: UP045 - Pydantic evaluates at runtime; breaks on 3.9
     position: int
     result_type: Literal[
-        "organic", "featured_snippet", "knowledge_panel", "news", "image", "sponsored"
+        "organic",
+        "featured_snippet",
+        "knowledge_panel",
+        "news",
+        "image",
+        "sponsored",
+        "ai_overview",
+        "people_also_ask",
+        "people_saying",
+        "people_also_search",
+        "related_products",
     ] = "organic"
     metadata: dict[str, object] = Field(default_factory=dict)
 

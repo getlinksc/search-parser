@@ -50,5 +50,15 @@ def duckduckgo_organic_html() -> str:
 
 
 @pytest.fixture()
+def google_need_javascript_html() -> str:
+    return (FIXTURES_DIR / "google" / "need_turn_on_javascript.html").read_text()
+
+
+@pytest.fixture()
 def duckduckgo_github_repos_html() -> str:
     return (FIXTURES_DIR / "duckduckgo" / "search_github_repos.html").read_text()
+
+
+@pytest.fixture()
+def google_web_scraping_html() -> str:
+    return (FIXTURES_DIR / "google" / "search_python_web_scraping.html").read_text()
