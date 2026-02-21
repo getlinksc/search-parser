@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -104,27 +105,45 @@ class SearchEngineDetector:
 
         return None
 
+    # Allowed hostnames for each engine (exact match or subdomain of these)
+    _ALLOWED_HOSTS: dict[str, list[str]] = {
+        "google": ["google.com", "gstatic.com"],
+        "bing": ["bing.com"],
+        "duckduckgo": ["duckduckgo.com"],
+    }
+
+    @staticmethod
+    def _parse_host(href: str) -> str:
+        """Return the lowercase hostname from a URL, or '' on error."""
+        try:
+            return urlparse(href).hostname or ""
+        except ValueError:
+            return ""
+
+    @classmethod
+    def _match_engine(cls, host: str) -> str | None:
+        """Return the engine name if *host* belongs to one of the allowed sets."""
+        for engine, allowed in cls._ALLOWED_HOSTS.items():
+            for allowed_host in allowed:
+                if host == allowed_host or host.endswith("." + allowed_host):
+                    return engine
+        return None
+
     def _check_url_patterns(self, soup: BeautifulSoup) -> DetectionResult | None:
         """Check URL patterns in HTML for search engine identification."""
-        # Check canonical URL
+        # Check canonical URL first (higher confidence)
         canonical = soup.find("link", attrs={"rel": "canonical"})
         if isinstance(canonical, Tag):
-            href = str(canonical.get("href", "")).lower()
-            if "google.com" in href:
-                return DetectionResult(engine="google", confidence=0.9)
-            if "bing.com" in href:
-                return DetectionResult(engine="bing", confidence=0.9)
-            if "duckduckgo.com" in href:
-                return DetectionResult(engine="duckduckgo", confidence=0.9)
+            host = self._parse_host(str(canonical.get("href", "")))
+            engine = self._match_engine(host)
+            if engine:
+                return DetectionResult(engine=engine, confidence=0.9)
 
-        # Check for search engine URLs in links
+        # Check other <link> elements
         for link in soup.find_all("link"):
-            href = str(link.get("href", "")).lower()
-            if "google.com" in href or "gstatic.com" in href:
-                return DetectionResult(engine="google", confidence=0.6)
-            if "bing.com" in href:
-                return DetectionResult(engine="bing", confidence=0.6)
-            if "duckduckgo.com" in href:
-                return DetectionResult(engine="duckduckgo", confidence=0.6)
+            host = self._parse_host(str(link.get("href", "")))
+            engine = self._match_engine(host)
+            if engine:
+                return DetectionResult(engine=engine, confidence=0.6)
 
         return None
