@@ -79,6 +79,23 @@ for item in data["people_also_search"]:
 # Related Products & Services (Google only)
 for product in data["related_products"]:
     print(product["title"])
+
+# Jobs (Google only)
+for job in data["jobs"]:
+    print(job["title"], "at", job["metadata"]["company"])
+    print("  Location:", job["metadata"]["location"])
+    if job["metadata"].get("salary"):
+        print("  Salary:", job["metadata"]["salary"])
+    if job["metadata"].get("employment_type"):
+        print("  Type:", job["metadata"]["employment_type"])
+
+# Discussions and forums (Google only)
+for disc in data["discussions"]:
+    print(disc["title"])
+    print("  URL:", disc["url"])
+    print("  Source:", disc["metadata"]["source"])
+    if disc["description"]:
+        print("  Excerpt:", disc["description"][:100])
 ```
 
 ## Specifying the Engine

@@ -69,3 +69,5 @@ md_str = results.to_markdown()
 | What People Are Saying | `people_saying` | ✓ | — | — |
 | People Also Search For | `people_also_search` | ✓ | — | — |
 | Related Products & Services | `related_products` | ✓ | — | — |
+| Jobs | `jobs` | ✓ | — | — |
+| Discussions and forums | `discussions` | ✓ | — | — |

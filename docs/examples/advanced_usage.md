@@ -87,6 +87,19 @@ for item in results.people_also_search:
 # Product / service suggestions
 for product in results.related_products:
     print(product.title, product.url)
+
+# Jobs — metadata includes company, location, salary, employment_type, benefits
+for job in results.jobs:
+    print(job.title)
+    print(f"  {job.metadata['company']} — {job.metadata['location']}")
+    if job.metadata.get("salary"):
+        print(f"  Salary: {job.metadata['salary']}")
+
+# Discussions and forums — metadata["source"] has platform + comment count + age
+for disc in results.discussions:
+    print(disc.title)
+    print(f"  {disc.url}")
+    print(f"  {disc.metadata['source']}")
 ```
 
 ## Using to_json() and to_markdown()
