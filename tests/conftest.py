@@ -62,3 +62,8 @@ def duckduckgo_github_repos_html() -> str:
 @pytest.fixture()
 def google_web_scraping_html() -> str:
     return (FIXTURES_DIR / "google" / "search_python_web_scraping.html").read_text()
+
+
+@pytest.fixture()
+def google_supply_chain_jobs_html() -> str:
+    return (FIXTURES_DIR / "google" / "supply-chain-director-jobs.html").read_text()

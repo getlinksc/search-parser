@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-03-05
+
+### Added
+
+- **Google parser: Jobs** — new `jobs` field on `SearchResults` containing job listings from the Google Jobs widget. Each entry has `result_type="job"` with `metadata["company"]` and `metadata["location"]` fields. Jobs are never included in the organic `results` list.
+- **Google parser: Discussions and forums** — new `discussions` field on `SearchResults` containing entries from the "Discussions and forums" widget. Each entry has `result_type="discussion"` with a `description` excerpt and `metadata["source"]` (platform, forum, comment count, and date).
+- New `result_type` values `"job"` and `"discussion"` added to the `SearchResult` model's Literal type.
+- Markdown formatter now renders `## Jobs` and `## Discussions and Forums` sections when those fields are present.
+- Unit tests for jobs and discussions parsing using the `supply-chain-director-jobs.html` fixture.
+
+---
+
 ## [0.3.0] - 2026-02-21
 
 ### Changed
@@ -16,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed all stale `search_engine_parser` references to `search_parser` across config, docs, and CI workflows.
 - Fixed `pyproject.toml`: CLI entry point, hatch build target, and mypy `files` path all now point to `src/search_parser`.
 - Synced `__version__.py` to match `pyproject.toml`.
+- Added author and publisher metadata (`linksc`, `hello@link.sc`) to `pyproject.toml`.
+- Updated package description with explicit search engine names and output formats for better discoverability.
 
 ---
 
@@ -82,6 +96,8 @@ sponsored = results.sponsored         # list[SearchResult]
 - CI/CD workflows for testing, linting, coverage, and publishing.
 - Pre-commit hooks for ruff and mypy.
 
-[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/getlinksc/search-parser/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/getlinksc/search-parser/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/getlinksc/search-parser/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/getlinksc/search-parser/releases/tag/v0.1.0

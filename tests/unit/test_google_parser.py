@@ -286,6 +286,85 @@ class TestGoogleParser:
         results = self.parser.parse(google_organic_html)
         assert results.related_products == []
 
+    # --- jobs ---
+
+    def test_parse_jobs(self, google_supply_chain_jobs_html: str) -> None:
+        results = self.parser.parse(google_supply_chain_jobs_html)
+        assert len(results.jobs) == 3
+        titles = [r.title for r in results.jobs]
+        assert "Global Supply Chain Director" in titles
+        assert "Sr. Manager, Supply Chain" in titles
+
+    def test_parse_jobs_have_company_and_location(self, google_supply_chain_jobs_html: str) -> None:
+        for job in self.parser.parse(google_supply_chain_jobs_html).jobs:
+            assert job.result_type == "job"
+            assert job.position == 0
+            assert "company" in job.metadata
+            assert "location" in job.metadata
+            assert job.metadata["company"]
+            assert job.metadata["location"]
+
+    def test_parse_jobs_not_in_organic(self, google_supply_chain_jobs_html: str) -> None:
+        results = self.parser.parse(google_supply_chain_jobs_html)
+        assert len(results.jobs) == 3
+        for r in results.results:
+            assert r.result_type != "job"
+
+    def test_parse_no_jobs_returns_empty(self, google_organic_html: str) -> None:
+        results = self.parser.parse(google_organic_html)
+        assert results.jobs == []
+
+    def test_parse_jobs_metadata(self, google_supply_chain_jobs_html: str) -> None:
+        jobs = self.parser.parse(google_supply_chain_jobs_html).jobs
+        companies = [str(j.metadata["company"]) for j in jobs]
+        assert "InterSources, Inc." in companies
+        assert "Legrand North America" in companies
+        assert "Thermo Fisher Scientific" in companies
+
+    def test_parse_jobs_salary_when_present(self, google_supply_chain_jobs_html: str) -> None:
+        jobs = self.parser.parse(google_supply_chain_jobs_html).jobs
+        # First job (InterSources) has a salary range; others do not
+        intersources = next(j for j in jobs if j.metadata.get("company") == "InterSources, Inc.")
+        assert intersources.metadata.get("salary") == "150K–200K a year"
+
+    def test_parse_jobs_employment_type(self, google_supply_chain_jobs_html: str) -> None:
+        for job in self.parser.parse(google_supply_chain_jobs_html).jobs:
+            assert job.metadata.get("employment_type") == "Full-time"
+
+    # --- discussions ---
+
+    def test_parse_discussions(self, google_supply_chain_jobs_html: str) -> None:
+        results = self.parser.parse(google_supply_chain_jobs_html)
+        assert len(results.discussions) == 3
+        titles = [r.title for r in results.discussions]
+        assert "Being considered for Director of Supply Chain" in titles
+        assert "Director level" in titles
+
+    def test_parse_discussions_have_urls(self, google_supply_chain_jobs_html: str) -> None:
+        for disc in self.parser.parse(google_supply_chain_jobs_html).discussions:
+            assert disc.result_type == "discussion"
+            assert disc.url.startswith("https://")
+
+    def test_parse_discussions_have_descriptions(self, google_supply_chain_jobs_html: str) -> None:
+        for disc in self.parser.parse(google_supply_chain_jobs_html).discussions:
+            assert disc.description is not None
+            assert len(disc.description) > 0
+
+    def test_parse_discussions_have_source_metadata(self, google_supply_chain_jobs_html: str) -> None:
+        for disc in self.parser.parse(google_supply_chain_jobs_html).discussions:
+            assert "source" in disc.metadata
+            assert disc.metadata["source"]
+
+    def test_parse_discussions_not_in_organic(self, google_supply_chain_jobs_html: str) -> None:
+        results = self.parser.parse(google_supply_chain_jobs_html)
+        assert len(results.discussions) == 3
+        for r in results.results:
+            assert r.result_type != "discussion"
+
+    def test_parse_no_discussions_returns_empty(self, google_organic_html: str) -> None:
+        results = self.parser.parse(google_organic_html)
+        assert results.discussions == []
+
     # --- isolation check: non-organic types never leak into results ---
 
     def test_all_dedicated_fields_absent_from_organic(self, google_web_scraping_html: str) -> None:
@@ -297,6 +376,8 @@ class TestGoogleParser:
             "people_saying",
             "people_also_search",
             "related_products",
+            "job",
+            "discussion",
         }
         results = self.parser.parse(google_web_scraping_html)
         for r in results.results:
