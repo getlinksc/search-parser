@@ -81,6 +81,23 @@ for ad in data["sponsored"]:
 for product in data["related_products"]:
     print("Product:", product["title"])
 
+# Jobs (list) — Google only
+# Each job has metadata: company, location, salary (optional), employment_type, benefits
+for job in data["jobs"]:
+    print("Job:", job["title"])
+    print("  Company:", job["metadata"]["company"])
+    print("  Location:", job["metadata"]["location"])
+    print("  Salary:", job["metadata"].get("salary"))          # None if not listed
+    print("  Type:", job["metadata"].get("employment_type"))
+    print("  Benefits:", job["metadata"].get("benefits", []))
+
+# Discussions and forums (list) — Google only
+# Each entry has a url, description excerpt, and metadata["source"]
+for disc in data["discussions"]:
+    print("Discussion:", disc["title"])
+    print("  URL:", disc["url"])
+    print("  Source:", disc["metadata"]["source"])
+
 # Metadata
 print(data["query"])           # "python web scraping"
 print(data["total_results"])   # 26200000 or None
@@ -111,6 +128,12 @@ if results.ai_overview:
 
 for q in results.people_also_ask:
     print(q.title)
+
+for job in results.jobs:
+    print(job.title, job.metadata["company"], job.metadata.get("salary"))
+
+for disc in results.discussions:
+    print(disc.title, disc.url)
 
 # Serialize without going through SearchParser
 json_str = results.to_json()  # JSON string, indent=2 by default
