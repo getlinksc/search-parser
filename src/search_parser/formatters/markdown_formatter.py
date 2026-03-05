@@ -70,6 +70,18 @@ class MarkdownFormatter(BaseFormatter):
             for result in news:
                 lines.extend(self._format_result(result))
 
+        if results.jobs:
+            lines.append("## Jobs")
+            lines.append("")
+            for result in results.jobs:
+                lines.extend(self._format_job(result))
+
+        if results.discussions:
+            lines.append("## Discussions and Forums")
+            lines.append("")
+            for result in results.discussions:
+                lines.extend(self._format_result(result))
+
         lines.append("---")
         lines.append("")
         lines.append(f"*Parsed with search-engine-parser v{__version__}*")
@@ -99,6 +111,24 @@ class MarkdownFormatter(BaseFormatter):
             lines.append(result.description)
             lines.append("")
         lines.append(f"**URL:** {result.url}")
+        lines.append("")
+        return lines
+
+    def _format_job(self, result: SearchResult) -> list[str]:
+        """Format a job listing result."""
+        lines: list[str] = []
+        lines.append(f"### {result.title}")
+        lines.append("")
+        if result.metadata.get("company"):
+            lines.append(f"**Company:** {result.metadata['company']}")
+        if result.metadata.get("location"):
+            lines.append(f"**Location:** {result.metadata['location']}")
+        if result.metadata.get("salary"):
+            lines.append(f"**Salary:** {result.metadata['salary']}")
+        if result.metadata.get("employment_type"):
+            lines.append(f"**Type:** {result.metadata['employment_type']}")
+        if result.url:
+            lines.append(f"**URL:** {result.url}")
         lines.append("")
         return lines
 

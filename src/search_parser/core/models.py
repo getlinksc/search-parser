@@ -27,6 +27,8 @@ class SearchResult(BaseModel):
         "people_saying",
         "people_also_search",
         "related_products",
+        "job",
+        "discussion",
     ] = "organic"
     metadata: dict[str, object] = Field(default_factory=dict)
 
@@ -53,6 +55,8 @@ class SearchResults(BaseModel):
     people_saying: list[SearchResult] = Field(default_factory=list)
     people_also_search: list[SearchResult] = Field(default_factory=list)
     related_products: list[SearchResult] = Field(default_factory=list)
+    jobs: list[SearchResult] = Field(default_factory=list)
+    discussions: list[SearchResult] = Field(default_factory=list)
 
     detection_confidence: float = Field(ge=0.0, le=1.0)
     parsed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

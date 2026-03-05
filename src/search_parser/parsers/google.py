@@ -65,6 +65,8 @@ class GoogleParser(BaseParser):
             people_saying=self._extract_people_saying(soup),
             people_also_search=self._extract_people_also_search(soup),
             related_products=self._extract_related_products(soup),
+            jobs=self._extract_jobs(soup),
+            discussions=self._extract_discussions(soup),
             detection_confidence=confidence,
         )
 
@@ -342,6 +344,111 @@ class GoogleParser(BaseParser):
                         result_type="related_products",
                     )
                 )
+        return results
+
+    def _extract_jobs(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract Google Jobs widget listings.
+
+        Jobs are rendered inside a dedicated widget (``div.iYivne``) and are
+        intentionally kept out of the organic ``results`` list.
+        """
+        results: list[SearchResult] = []
+        widget = soup.find("div", class_="iYivne")
+        if not isinstance(widget, Tag):
+            return results
+        for item in widget.find_all("div", class_="EimVGf"):
+            if not isinstance(item, Tag):
+                continue
+            title_div = item.find("div", class_="tNxQIb")
+            company_div = item.find("div", class_="a3jPc")
+            location_div = item.find("div", class_="FqK3wc")
+            link = item.find("a", class_="MQUd2b")
+            title = clean_text(title_div.get_text()) if isinstance(title_div, Tag) else ""
+            if not title:
+                continue
+            url = str(link.get("href", "")) if isinstance(link, Tag) else ""
+            company = clean_text(company_div.get_text()) if isinstance(company_div, Tag) else None
+            location = clean_text(location_div.get_text()) if isinstance(location_div, Tag) else None
+
+            # Salary has the extra QZEeP class; employment type and other tags share K3eUK only
+            salary_div = item.find("div", class_="QZEeP")
+            salary = clean_text(salary_div.get_text()) if isinstance(salary_div, Tag) else None
+
+            # Employment type: K3eUK entries that are NOT the salary and NOT a date ("X days ago")
+            employment_type: str | None = None
+            for tag_div in item.find_all("div", class_="K3eUK"):
+                if not isinstance(tag_div, Tag):
+                    continue
+                if "QZEeP" in (tag_div.get("class") or []):
+                    continue  # skip salary
+                text = clean_text(tag_div.get_text())
+                if text and not re.search(r"\d+\s+\w+\s+ago", text):
+                    employment_type = text
+                    break
+
+            benefits = [
+                clean_text(b.get_text())
+                for b in item.find_all("div", class_="HvHIEc")
+                if isinstance(b, Tag) and clean_text(b.get_text())
+            ]
+
+            metadata: dict[str, object] = {}
+            if company:
+                metadata["company"] = company
+            if location:
+                metadata["location"] = location
+            if salary:
+                metadata["salary"] = salary
+            if employment_type:
+                metadata["employment_type"] = employment_type
+            if benefits:
+                metadata["benefits"] = benefits
+            results.append(
+                SearchResult(
+                    title=title,
+                    url=url,
+                    description=None,
+                    position=0,
+                    result_type="job",
+                    metadata=metadata,
+                )
+            )
+        return results
+
+    def _extract_discussions(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract 'Discussions and forums' widget entries."""
+        results: list[SearchResult] = []
+        header = soup.find("div", class_="DuxCpf")
+        if not isinstance(header, Tag):
+            return results
+        container = header.find_parent("div", class_="Ww4FFb")
+        if not isinstance(container, Tag):
+            return results
+        for item in container.find_all("div", class_="xYkm8c"):
+            if not isinstance(item, Tag):
+                continue
+            title_div = item.find("div", class_="j29v2b")
+            link = item.find("a", class_="KYg7td")
+            meta_div = item.find("div", class_="LbKnXb")
+            desc_div = item.find("div", class_="bCOlv")
+            title = clean_text(title_div.get_text()) if isinstance(title_div, Tag) else ""
+            if not title:
+                continue
+            url = str(link.get("href", "")) if isinstance(link, Tag) else ""
+            description = clean_text(desc_div.get_text()) if isinstance(desc_div, Tag) else None
+            metadata: dict[str, object] = {}
+            if isinstance(meta_div, Tag):
+                metadata["source"] = clean_text(meta_div.get_text())
+            results.append(
+                SearchResult(
+                    title=title,
+                    url=url,
+                    description=description,
+                    position=0,
+                    result_type="discussion",
+                    metadata=metadata,
+                )
+            )
         return results
 
     def _extract_featured_snippet(self, soup: BeautifulSoup) -> SearchResult | None:

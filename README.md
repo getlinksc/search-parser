@@ -77,6 +77,8 @@ pip install search-parser
 | What People Are Saying | `people_saying` | ✓ | — | — |
 | People Also Search For | `people_also_search` | ✓ | — | — |
 | Related Products & Services | `related_products` | ✓ | — | — |
+| Jobs | `jobs` | ✓ | — | — |
+| Discussions and forums | `discussions` | ✓ | — | — |
 
 ---
 
@@ -117,6 +119,15 @@ for ad in data["sponsored"]:
 
 for product in data["related_products"]:
     print(product["title"])
+
+# Jobs (title, metadata["company"], metadata["location"])
+for job in data["jobs"]:
+    print(job["title"], job["metadata"]["company"], job["metadata"]["location"])
+
+# Discussions (title, url, description, metadata["source"])
+for disc in data["discussions"]:
+    print(disc["title"], disc["url"])
+    print(disc["metadata"]["source"])
 
 # Metadata
 print(data["search_engine"])        # "google"
@@ -201,6 +212,31 @@ md_str = results.to_markdown()
   "people_saying": [],
   "people_also_search": [],
   "related_products": [],
+  "jobs": [
+    {
+      "title": "Global Supply Chain Director",
+      "url": "https://www.google.com/search?q=%22Supply+Chain+Director&udm=8",
+      "description": null,
+      "position": 0,
+      "result_type": "job",
+      "metadata": {
+        "company": "InterSources, Inc.",
+        "location": "San Jose, CA  •  via Ladders"
+      }
+    }
+  ],
+  "discussions": [
+    {
+      "title": "Being considered for Director of Supply Chain",
+      "url": "https://www.reddit.com/r/supplychain/comments/1ib0c1a/being_considered_for_director_of_supply_chain/",
+      "description": "I work for a mid-sized company as a Procurement Manager...",
+      "position": 0,
+      "result_type": "discussion",
+      "metadata": {
+        "source": "Reddit · r/supplychain · 10+ comments · 1 year ago"
+      }
+    }
+  ],
   "detection_confidence": 0.95,
   "parsed_at": "2026-02-21T00:00:00Z",
   "metadata": {}
@@ -233,6 +269,26 @@ Web scraping is the process of extracting data from websites...
 Learn how to scrape websites with Python...
 
 **URL:** https://realpython.com/python-web-scraping/
+
+---
+
+## Jobs
+
+### Global Supply Chain Director
+
+**Company:** InterSources, Inc.
+**Location:** San Jose, CA  •  via Ladders
+**URL:** https://www.google.com/search?q=%22Supply+Chain+Director&udm=8
+
+---
+
+## Discussions and Forums
+
+### Being considered for Director of Supply Chain
+
+I work for a mid-sized company as a Procurement Manager...
+
+**URL:** https://www.reddit.com/r/supplychain/comments/1ib0c1a/being_considered_for_director_of_supply_chain/
 ```
 
 ---
