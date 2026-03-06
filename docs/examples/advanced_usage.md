@@ -100,6 +100,12 @@ for disc in results.discussions:
     print(disc.title)
     print(f"  {disc.url}")
     print(f"  {disc.metadata['source']}")
+
+# Shopping ads — metadata["price"] and metadata["merchant"]
+for ad in results.shopping_ads:
+    print(ad.title)
+    print(f"  {ad.metadata['price']} from {ad.metadata['merchant']}")
+    print(f"  {ad.url}")
 ```
 
 ## Using to_json() and to_markdown()

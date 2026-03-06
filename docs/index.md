@@ -4,8 +4,8 @@ Parse search engine HTML results into structured data (JSON, Markdown) with auto
 
 ## Features
 
-- **Auto-detection** of Google, Bing, and DuckDuckGo HTML
-- **Dedicated fields** for every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, and more
+- **Auto-detection** of Google, Bing, and DuckDuckGo HTML — desktop and mobile layouts
+- **Dedicated fields** for every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more
 - **Multiple output formats**: JSON, Markdown, Python dict
 - **Convenience methods**: `results.to_json()` and `results.to_markdown()` directly on the model
 - **Extensible** plugin architecture for adding new search engines
@@ -40,6 +40,10 @@ if data["ai_overview"]:
 
 for q in data["people_also_ask"]:
     print(q["title"])
+
+# Shopping ads (Google only)
+for ad in data["shopping_ads"]:
+    print(ad["title"], ad["metadata"]["price"], ad["metadata"]["merchant"])
 ```
 
 Or work directly with the typed model and use `to_json()` / `to_markdown()`:
@@ -71,3 +75,4 @@ md_str = results.to_markdown()
 | Related Products & Services | `related_products` | ✓ | — | — |
 | Jobs | `jobs` | ✓ | — | — |
 | Discussions and forums | `discussions` | ✓ | — | — |
+| Shopping ads | `shopping_ads` | ✓ | — | — |

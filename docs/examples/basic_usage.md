@@ -96,6 +96,12 @@ for disc in data["discussions"]:
     print("  Source:", disc["metadata"]["source"])
     if disc["description"]:
         print("  Excerpt:", disc["description"][:100])
+
+# Shopping ads (Google only)
+for ad in data["shopping_ads"]:
+    print(ad["title"])
+    print("  Price:", ad["metadata"]["price"])
+    print("  Merchant:", ad["metadata"]["merchant"])
 ```
 
 ## Specifying the Engine
