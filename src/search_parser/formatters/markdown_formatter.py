@@ -82,6 +82,12 @@ class MarkdownFormatter(BaseFormatter):
             for result in results.discussions:
                 lines.extend(self._format_result(result))
 
+        if results.shopping_ads:
+            lines.append("## Shopping Ads")
+            lines.append("")
+            for result in results.shopping_ads:
+                lines.extend(self._format_shopping_ad(result))
+
         lines.append("---")
         lines.append("")
         lines.append(f"*Parsed with search-engine-parser v{__version__}*")
@@ -127,6 +133,20 @@ class MarkdownFormatter(BaseFormatter):
             lines.append(f"**Salary:** {result.metadata['salary']}")
         if result.metadata.get("employment_type"):
             lines.append(f"**Type:** {result.metadata['employment_type']}")
+        if result.url:
+            lines.append(f"**URL:** {result.url}")
+        lines.append("")
+        return lines
+
+    def _format_shopping_ad(self, result: SearchResult) -> list[str]:
+        """Format a shopping ad card."""
+        lines: list[str] = []
+        lines.append(f"### {result.title}")
+        lines.append("")
+        if result.metadata.get("price"):
+            lines.append(f"**Price:** {result.metadata['price']}")
+        if result.metadata.get("merchant"):
+            lines.append(f"**Merchant:** {result.metadata['merchant']}")
         if result.url:
             lines.append(f"**URL:** {result.url}")
         lines.append("")

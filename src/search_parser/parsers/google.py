@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from urllib.parse import unquote
 
 from bs4 import BeautifulSoup, Tag
 
@@ -34,6 +35,12 @@ class GoogleParser(BaseParser):
 
         if soup.find_all("div", class_="g"):
             confidence = max(confidence, 0.7)
+
+        # Mobile Google pages lack div#search and div.g but have these signals
+        if soup.find_all("div", class_="xpd"):
+            confidence = max(confidence, 0.7)
+        if soup.find_all(class_="zBAuLc"):
+            confidence = max(confidence, 0.8)
 
         return confidence
 
@@ -67,11 +74,12 @@ class GoogleParser(BaseParser):
             related_products=self._extract_related_products(soup),
             jobs=self._extract_jobs(soup),
             discussions=self._extract_discussions(soup),
+            shopping_ads=self._extract_shopping_ads(soup),
             detection_confidence=confidence,
         )
 
     def _find_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
-        """Find all organic result containers."""
+        """Find all organic result containers (desktop and mobile)."""
         search_div = soup.find("div", id="search")
         if isinstance(search_div, Tag):
             g_divs = [
@@ -84,7 +92,22 @@ class GoogleParser(BaseParser):
             # Fallback: locate results by their yuRUbf (title/link) sections
             # and walk up to find a container that also holds the description.
             return self._find_results_by_title_links(search_div)
-        return [t for t in soup.find_all("div", class_="g") if isinstance(t, Tag)]
+
+        # Desktop fallback without #search container
+        g_divs = [t for t in soup.find_all("div", class_="g") if isinstance(t, Tag)]
+        if g_divs:
+            return g_divs
+
+        # Mobile Google pages use div.xpd containers with egMi0 for organic results
+        return self._find_mobile_organic_results(soup)
+
+    def _find_mobile_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
+        """Find organic result containers on mobile Google pages (div.xpd with egMi0)."""
+        return [
+            t
+            for t in soup.find_all("div", class_="xpd")
+            if isinstance(t, Tag) and t.find(class_="egMi0")
+        ]
 
     def _find_results_by_title_links(self, root: Tag) -> list[Tag]:
         """Find result containers by locating yuRUbf divs and their ancestors."""
@@ -110,8 +133,12 @@ class GoogleParser(BaseParser):
         return title_link.parent if isinstance(title_link.parent, Tag) else None
 
     def _parse_organic_result(self, item: Tag, position: int) -> SearchResult | None:
-        """Parse a single organic result div."""
-        # Find the title link
+        """Parse a single organic result div (desktop or mobile)."""
+        # Mobile path: containers have egMi0 class
+        if item.find(class_="egMi0"):
+            return self._parse_mobile_organic_result(item, position)
+
+        # Desktop path
         link_container = item.find("div", class_="yuRUbf")
         if not isinstance(link_container, Tag):
             # Try finding a direct link with h3
@@ -145,6 +172,55 @@ class GoogleParser(BaseParser):
             position=position,
             result_type="organic",
         )
+
+    def _parse_mobile_organic_result(self, item: Tag, position: int) -> SearchResult | None:
+        """Parse a single mobile Google organic result (div.xpd with egMi0 container)."""
+        title_block = item.find(class_="egMi0")
+        if not isinstance(title_block, Tag):
+            return None
+
+        h3 = title_block.find("h3")
+        if not isinstance(h3, Tag):
+            return None
+        title = clean_text(h3.get_text())
+        if not title:
+            return None
+
+        link = title_block.find("a")
+        if not isinstance(link, Tag):
+            return None
+        url = self._decode_google_redirect(str(link.get("href", "")))
+        if not url:
+            return None
+
+        # Description is in the second kCrYT div (the one without egMi0)
+        description: str | None = None
+        kcryt_divs = item.find_all(class_="kCrYT")
+        for k in kcryt_divs:
+            if not isinstance(k, Tag) or k.find(class_="egMi0"):
+                continue
+            text = clean_text(k.get_text())
+            if text:
+                description = text
+                break
+
+        return SearchResult(
+            title=title,
+            url=url,
+            description=description,
+            position=position,
+            result_type="organic",
+        )
+
+    @staticmethod
+    def _decode_google_redirect(href: str) -> str:
+        """Decode a Google /url?q=... redirect to the actual destination URL."""
+        if not href:
+            return href
+        m = re.search(r"/url\?q=([^&]+)", href)
+        if m:
+            return unquote(m.group(1))
+        return href
 
     def _extract_sponsored_results(self, soup: BeautifulSoup) -> list[SearchResult]:
         """Extract sponsored (ad) results from Google search pages."""
@@ -212,40 +288,112 @@ class GoogleParser(BaseParser):
             return None
 
     def _extract_ai_overview(self, soup: BeautifulSoup) -> SearchResult | None:
-        """Extract AI Overview section if present."""
+        """Extract AI Overview section if present (desktop and mobile)."""
+        # Desktop: div.YzCcne container
         container = soup.find("div", class_="YzCcne")
-        if not isinstance(container, Tag):
-            return None
+        if isinstance(container, Tag):
+            content_div = container.find("div", class_="mZJni")
+            if isinstance(content_div, Tag):
+                description = clean_text(content_div.get_text())
+                if description:
+                    sources: list[dict[str, str]] = []
+                    for link in container.find_all("a", href=True):
+                        if not isinstance(link, Tag):
+                            continue
+                        href = str(link.get("href", ""))
+                        text = clean_text(link.get_text())
+                        if href.startswith("http") and text:
+                            sources.append({"title": text, "url": href})
+                    return SearchResult(
+                        title="AI Overview",
+                        url="",
+                        description=description,
+                        position=0,
+                        result_type="ai_overview",
+                        metadata={"sources": sources},
+                    )
 
-        content_div = container.find("div", class_="mZJni")
-        if not isinstance(content_div, Tag):
-            return None
-
-        description = clean_text(content_div.get_text())
-        if not description:
-            return None
-
-        sources: list[dict[str, str]] = []
-        for link in container.find_all("a", href=True):
-            if not isinstance(link, Tag):
+        # Mobile: AI Overview content is in div.frRrnc inside xpd block with gqwIMe header
+        for xpd in soup.find_all("div", class_="xpd"):
+            if not isinstance(xpd, Tag):
                 continue
-            href = str(link.get("href", ""))
-            text = clean_text(link.get_text())
-            if href.startswith("http") and text:
-                sources.append({"title": text, "url": href})
+            if not xpd.find(class_="gqwIMe"):
+                continue
+            content_div = xpd.find("div", class_="frRrnc")
+            if not isinstance(content_div, Tag):
+                continue
+            description = clean_text(content_div.get_text())
+            if description:
+                return SearchResult(
+                    title="AI Overview",
+                    url="",
+                    description=description,
+                    position=0,
+                    result_type="ai_overview",
+                    metadata={"sources": []},
+                )
+
+        return None
+
+    def _extract_shopping_ads(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract shopping ad cards (mobile and desktop Google Shopping units)."""
+        results: list[SearchResult] = []
+
+        # Mobile: div.wywECb wrapper contains div.qvfQJe product cards
+        shopping_wrapper = soup.find("div", class_="wywECb")
+        if isinstance(shopping_wrapper, Tag):
+            for card in shopping_wrapper.find_all("div", class_="qvfQJe"):
+                if not isinstance(card, Tag):
+                    continue
+                result = self._parse_shopping_card(card)
+                if result:
+                    results.append(result)
+
+        return results
+
+    def _parse_shopping_card(self, card: Tag) -> SearchResult | None:
+        """Parse a single mobile shopping product card (div.qvfQJe)."""
+        title_container = card.find(class_="bXPcId")
+        if not isinstance(title_container, Tag):
+            return None
+        first_div = title_container.find("div")
+        title = (
+            clean_text(first_div.get_text())
+            if isinstance(first_div, Tag)
+            else clean_text(title_container.get_text())
+        )
+        if not title:
+            return None
+
+        link = card.find("a")
+        url = str(link.get("href", "")) if isinstance(link, Tag) else ""
+
+        price_el = card.find(class_="VbBaOe")
+        price = clean_text(price_el.get_text()) if isinstance(price_el, Tag) else None
+
+        merchant_el = card.find(class_="BZuDuc")
+        merchant = clean_text(merchant_el.get_text()) if isinstance(merchant_el, Tag) else None
+
+        metadata: dict[str, object] = {}
+        if price:
+            metadata["price"] = price
+        if merchant:
+            metadata["merchant"] = merchant
 
         return SearchResult(
-            title="AI Overview",
-            url="",
-            description=description,
+            title=title,
+            url=url,
+            description=None,
             position=0,
-            result_type="ai_overview",
-            metadata={"sources": sources},
+            result_type="shopping_ad",
+            metadata=metadata,
         )
 
     def _extract_people_also_ask(self, soup: BeautifulSoup) -> list[SearchResult]:
-        """Extract People Also Ask questions."""
+        """Extract People Also Ask questions (desktop and mobile)."""
         results: list[SearchResult] = []
+
+        # Desktop: related-question-pair divs
         for item in soup.find_all("div", class_="related-question-pair"):
             if not isinstance(item, Tag):
                 continue
@@ -264,6 +412,24 @@ class GoogleParser(BaseParser):
                         result_type="people_also_ask",
                     )
                 )
+
+        # Mobile: questions in div.Lt3Tzc inside xpd blocks
+        if not results:
+            for question_div in soup.find_all("div", class_="Lt3Tzc"):
+                if not isinstance(question_div, Tag):
+                    continue
+                question = clean_text(question_div.get_text())
+                if question:
+                    results.append(
+                        SearchResult(
+                            title=question,
+                            url="",
+                            description=None,
+                            position=0,
+                            result_type="people_also_ask",
+                        )
+                    )
+
         return results
 
     def _extract_people_saying(self, soup: BeautifulSoup) -> list[SearchResult]:
@@ -294,33 +460,52 @@ class GoogleParser(BaseParser):
         return results
 
     def _extract_people_also_search(self, soup: BeautifulSoup) -> list[SearchResult]:
-        """Extract 'People Also Search For' carousel items."""
+        """Extract 'People Also Search For' carousel items (desktop and mobile)."""
         results: list[SearchResult] = []
+
+        # Desktop: oIk2Cb > XNfAUb carousel
         outer = soup.find("div", class_="oIk2Cb")
-        if not isinstance(outer, Tag):
-            return results
-        carousel = outer.find("div", class_="XNfAUb")
-        if not isinstance(carousel, Tag):
-            return results
-        for item in carousel.find_all("div", class_="XRVJtc"):
-            if not isinstance(item, Tag):
-                continue
-            link = item.find("a", class_="qrtwm")
-            span = item.find("span", class_="Yt787")
-            if not isinstance(link, Tag) or not isinstance(span, Tag):
-                continue
-            url = str(link.get("href", ""))
-            title = clean_text(span.get_text())
-            if title:
-                results.append(
-                    SearchResult(
-                        title=title,
-                        url=url,
-                        description=None,
-                        position=0,
-                        result_type="people_also_search",
+        if isinstance(outer, Tag):
+            carousel = outer.find("div", class_="XNfAUb")
+            if isinstance(carousel, Tag):
+                for item in carousel.find_all("div", class_="XRVJtc"):
+                    if not isinstance(item, Tag):
+                        continue
+                    link = item.find("a", class_="qrtwm")
+                    span = item.find("span", class_="Yt787")
+                    if not isinstance(link, Tag) or not isinstance(span, Tag):
+                        continue
+                    url = str(link.get("href", ""))
+                    title = clean_text(span.get_text())
+                    if title:
+                        results.append(
+                            SearchResult(
+                                title=title,
+                                url=url,
+                                description=None,
+                                position=0,
+                                result_type="people_also_search",
+                            )
+                        )
+
+        # Mobile: a.Q71vJc links inside xpd blocks
+        if not results:
+            for link in soup.find_all("a", class_="Q71vJc"):
+                if not isinstance(link, Tag):
+                    continue
+                url = str(link.get("href", ""))
+                title = clean_text(link.get_text())
+                if title:
+                    results.append(
+                        SearchResult(
+                            title=title,
+                            url=url,
+                            description=None,
+                            position=0,
+                            result_type="people_also_search",
+                        )
                     )
-                )
+
         return results
 
     def _extract_related_products(self, soup: BeautifulSoup) -> list[SearchResult]:

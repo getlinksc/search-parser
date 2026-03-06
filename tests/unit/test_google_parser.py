@@ -365,6 +365,159 @@ class TestGoogleParser:
         results = self.parser.parse(google_organic_html)
         assert results.discussions == []
 
+    # --- mobile organic results ---
+
+    def test_parse_mobile_organic_results(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert results.search_engine == "google"
+        assert results.query == "contact lens weekly"
+        assert len(results.results) == 10
+
+    def test_parse_mobile_organic_result_positions(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert [r.position for r in results.results] == list(range(1, 11))
+
+    def test_parse_mobile_organic_urls_are_decoded(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.url.startswith("https://")
+            assert "/url?q=" not in r.url
+
+    def test_parse_mobile_organic_have_titles(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        titles = [r.title for r in results.results]
+        assert "Weekly and Bi-Weekly Contact Lenses | Target Optical" in titles
+        assert "Weekly Contact Lenses - LensDirect" in titles
+
+    def test_parse_mobile_organic_not_in_other_fields(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.result_type == "organic"
+
+    def test_parse_mobile_detection_confidence(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert results.detection_confidence >= 0.8
+
+    # --- mobile people_also_ask ---
+
+    def test_parse_mobile_people_also_ask(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert len(results.people_also_ask) == 3
+        questions = [r.title for r in results.people_also_ask]
+        assert "Is there a weekly contact lens?" in questions
+        assert "Can I wear contact lenses 7 days a week?" in questions
+
+    def test_parse_mobile_people_also_ask_not_in_organic(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.result_type != "people_also_ask"
+
+    # --- mobile people_also_search ---
+
+    def test_parse_mobile_people_also_search(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert len(results.people_also_search) == 6
+        titles = [r.title for r in results.people_also_search]
+        assert "Contact lens weekly walmart" in titles
+
+    def test_parse_mobile_people_also_search_not_in_organic(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.result_type != "people_also_search"
+
+    # --- mobile ai_overview ---
+
+    def test_parse_mobile_ai_overview(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert results.ai_overview is not None
+        assert results.ai_overview.title == "AI Overview"
+        assert results.ai_overview.description is not None
+        assert "weekly" in results.ai_overview.description.lower()
+        assert results.ai_overview.result_type == "ai_overview"
+
+    def test_parse_mobile_ai_overview_not_in_organic(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.result_type != "ai_overview"
+
+    # --- shopping ads ---
+
+    def test_parse_shopping_ads(self, google_weekly_contacts_mobile_html: str) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        assert len(results.shopping_ads) == 4
+
+    def test_parse_shopping_ads_have_titles(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
+        titles = [r.title for r in ads]
+        assert "ALCON - Precision7 , 12 Pack" in titles
+        assert "Acuvue Oasys 12 Pack Contact Lenses" in titles
+
+    def test_parse_shopping_ads_have_price_and_merchant(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        for ad in self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads:
+            assert ad.result_type == "shopping_ad"
+            assert ad.position == 0
+            assert "price" in ad.metadata
+            assert "merchant" in ad.metadata
+            assert ad.metadata["price"]
+            assert ad.metadata["merchant"]
+
+    def test_parse_shopping_ads_prices(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
+        prices = [str(r.metadata["price"]) for r in ads]
+        assert "$51.19" in prices
+        assert "$83.99" in prices
+        assert "$48.79" in prices
+        assert "$72.79" in prices
+
+    def test_parse_shopping_ads_merchants(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
+        merchants = [str(r.metadata["merchant"]) for r in ads]
+        assert "Contacts Direct" in merchants
+        assert "1800Contacts" in merchants
+
+    def test_parse_shopping_ads_not_in_organic(
+        self, google_weekly_contacts_mobile_html: str
+    ) -> None:
+        results = self.parser.parse(google_weekly_contacts_mobile_html)
+        for r in results.results:
+            assert r.result_type != "shopping_ad"
+
+    def test_parse_no_shopping_ads_returns_empty(self, google_organic_html: str) -> None:
+        results = self.parser.parse(google_organic_html)
+        assert results.shopping_ads == []
+
     # --- isolation check: non-organic types never leak into results ---
 
     def test_all_dedicated_fields_absent_from_organic(self, google_web_scraping_html: str) -> None:
@@ -378,6 +531,7 @@ class TestGoogleParser:
             "related_products",
             "job",
             "discussion",
+            "shopping_ad",
         }
         results = self.parser.parse(google_web_scraping_html)
         for r in results.results:
