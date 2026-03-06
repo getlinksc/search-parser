@@ -98,6 +98,13 @@ for disc in data["discussions"]:
     print("  URL:", disc["url"])
     print("  Source:", disc["metadata"]["source"])
 
+# Shopping ads (list) — Google only
+# Each entry has metadata["price"] and metadata["merchant"]
+for ad in data["shopping_ads"]:
+    print("Ad:", ad["title"])
+    print("  Price:", ad["metadata"]["price"])
+    print("  Merchant:", ad["metadata"]["merchant"])
+
 # Metadata
 print(data["query"])           # "python web scraping"
 print(data["total_results"])   # 26200000 or None
@@ -134,6 +141,9 @@ for job in results.jobs:
 
 for disc in results.discussions:
     print(disc.title, disc.url)
+
+for ad in results.shopping_ads:
+    print(ad.title, ad.metadata["price"], ad.metadata["merchant"])
 
 # Serialize without going through SearchParser
 json_str = results.to_json()  # JSON string, indent=2 by default

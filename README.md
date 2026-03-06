@@ -10,7 +10,7 @@
 
 **Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or Python dict — with automatic search engine detection.**
 
-`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
+`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop or mobile — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
 ---
 
@@ -79,6 +79,7 @@ pip install search-parser
 | Related Products & Services | `related_products` | ✓ | — | — |
 | Jobs | `jobs` | ✓ | — | — |
 | Discussions and forums | `discussions` | ✓ | — | — |
+| Shopping ads | `shopping_ads` | ✓ | — | — |
 
 ---
 
@@ -129,6 +130,10 @@ for disc in data["discussions"]:
     print(disc["title"], disc["url"])
     print(disc["metadata"]["source"])
 
+# Shopping ads (title, metadata["price"], metadata["merchant"])
+for ad in data["shopping_ads"]:
+    print(ad["title"], ad["metadata"]["price"], ad["metadata"]["merchant"])
+
 # Metadata
 print(data["search_engine"])        # "google"
 print(data["query"])                # "python web scraping"
@@ -163,6 +168,9 @@ for q in results.people_also_ask:
 
 for post in results.people_saying:
     print(post.title, post.url)
+
+for ad in results.shopping_ads:
+    print(ad.title, ad.metadata["price"], ad.metadata["merchant"])
 
 # Convert to JSON or Markdown directly on the model
 json_str = results.to_json()
@@ -237,6 +245,19 @@ md_str = results.to_markdown()
       }
     }
   ],
+  "shopping_ads": [
+    {
+      "title": "ALCON - Precision7 , 12 Pack",
+      "url": "http://www.google.com/aclk?sa=L&ai=...",
+      "description": null,
+      "position": 0,
+      "result_type": "shopping_ad",
+      "metadata": {
+        "price": "$51.19",
+        "merchant": "Contacts Direct"
+      }
+    }
+  ],
   "detection_confidence": 0.95,
   "parsed_at": "2026-02-21T00:00:00Z",
   "metadata": {}
@@ -289,6 +310,14 @@ Learn how to scrape websites with Python...
 I work for a mid-sized company as a Procurement Manager...
 
 **URL:** https://www.reddit.com/r/supplychain/comments/1ib0c1a/being_considered_for_director_of_supply_chain/
+
+## Shopping Ads
+
+### ALCON - Precision7 , 12 Pack
+
+**Price:** $51.19
+**Merchant:** Contacts Direct
+**URL:** http://www.google.com/aclk?sa=L&ai=...
 ```
 
 ---
