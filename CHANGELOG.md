@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1] - 2026-03-05
+
+### Added
+
+- **Google parser: Mobile HTML support** — organic results from mobile Google pages (using `div.xpd` / `egMi0` layout) are now parsed correctly. URLs are decoded from Google's `/url?q=...` redirect format to the actual destination. People Also Ask, People Also Search For, and AI Overview are also extracted from the mobile layout.
+- **Google parser: Shopping Ads** — new `shopping_ads` field on `SearchResults` containing product cards from Google Shopping units (mobile `wywECb`/`qvfQJe` layout). Each entry has `result_type="shopping_ad"` with `metadata["price"]` and `metadata["merchant"]`. Shopping ads are never included in the organic `results` list.
+- New `result_type` value `"shopping_ad"` added to the `SearchResult` model's Literal type.
+- Markdown formatter now renders a `## Shopping Ads` section when `shopping_ads` are present.
+- 14 new unit tests covering mobile organic results (count, positions, URL decoding, titles), mobile PAA, mobile PASF, mobile AI Overview, and shopping ads (count, titles, prices, merchants, isolation).
+
+---
+
 ## [0.4.0] - 2026-03-05
 
 ### Added
