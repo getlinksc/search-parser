@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-04-08
+
+### Added
+
+- **Google parser: News Tab** — new `news` field on `SearchResults` containing articles from the Google News tab (`tbm=nws`). Each entry has `result_type="news"` with `metadata["source"]` (publisher name) and `metadata["published_time"]` (e.g. "2 days ago"). News articles are never included in the organic `results` list.
+- New `result_type` value `"news"` is now backed by a dedicated `news` field on `SearchResults` (the type was previously defined in the Literal but had no dedicated field).
+- Markdown formatter now renders a `## News Results` section with position, source, published time, description, and URL when `news` results are present, using the new `_format_news()` method.
+- 13 new unit tests covering news tab parsing (count, result type, positions, titles, URLs, descriptions, source metadata, published time, isolation from organic, total results, detection confidence, and empty-page fallback).
+
+---
+
 ## [0.4.1] - 2026-03-05
 
 ### Added

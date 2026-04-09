@@ -72,3 +72,13 @@ def google_supply_chain_jobs_html() -> str:
 @pytest.fixture()
 def google_weekly_contacts_mobile_html() -> str:
     return (FIXTURES_DIR / "google" / "weekly_contacts_with_mobile.html").read_text()
+
+
+@pytest.fixture()
+def google_seven_cloak_html() -> str:
+    return (FIXTURES_DIR / "google" / "search_seven_cloak.html").read_text()
+
+
+@pytest.fixture()
+def google_news_tab_html() -> str:
+    return (FIXTURES_DIR / "google" / "news_tab_search.html").read_text()

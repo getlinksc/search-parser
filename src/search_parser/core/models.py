@@ -59,6 +59,7 @@ class SearchResults(BaseModel):
     jobs: list[SearchResult] = Field(default_factory=list)
     discussions: list[SearchResult] = Field(default_factory=list)
     shopping_ads: list[SearchResult] = Field(default_factory=list)
+    news: list[SearchResult] = Field(default_factory=list)
 
     detection_confidence: float = Field(ge=0.0, le=1.0)
     parsed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

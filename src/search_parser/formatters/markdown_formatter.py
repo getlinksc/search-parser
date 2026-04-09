@@ -63,12 +63,11 @@ class MarkdownFormatter(BaseFormatter):
             for result in organic:
                 lines.extend(self._format_organic(result))
 
-        news = [r for r in results.results if r.result_type == "news"]
-        if news:
+        if results.news:
             lines.append("## News Results")
             lines.append("")
-            for result in news:
-                lines.extend(self._format_result(result))
+            for result in results.news:
+                lines.extend(self._format_news(result))
 
         if results.jobs:
             lines.append("## Jobs")
@@ -149,6 +148,24 @@ class MarkdownFormatter(BaseFormatter):
             lines.append(f"**Merchant:** {result.metadata['merchant']}")
         if result.url:
             lines.append(f"**URL:** {result.url}")
+        lines.append("")
+        return lines
+
+    def _format_news(self, result: SearchResult) -> list[str]:
+        """Format a news article result."""
+        lines: list[str] = []
+        lines.append(f"### {result.position}. {result.title}")
+        lines.append("")
+        if result.metadata.get("source"):
+            meta = str(result.metadata["source"])
+            if result.metadata.get("published_time"):
+                meta += f" · {result.metadata['published_time']}"
+            lines.append(f"**Source:** {meta}")
+            lines.append("")
+        if result.description:
+            lines.append(result.description)
+            lines.append("")
+        lines.append(f"**URL:** {result.url}")
         lines.append("")
         return lines
 
