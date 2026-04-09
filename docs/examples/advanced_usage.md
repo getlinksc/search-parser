@@ -106,6 +106,12 @@ for ad in results.shopping_ads:
     print(ad.title)
     print(f"  {ad.metadata['price']} from {ad.metadata['merchant']}")
     print(f"  {ad.url}")
+
+# News tab articles — metadata["source"] (publisher) and metadata["published_time"]
+for article in results.news:
+    print(article.title)
+    print(f"  {article.metadata['source']} · {article.metadata['published_time']}")
+    print(f"  {article.url}")
 ```
 
 ## Using to_json() and to_markdown()

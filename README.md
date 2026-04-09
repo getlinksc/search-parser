@@ -80,6 +80,7 @@ pip install search-parser
 | Jobs | `jobs` | ✓ | — | — |
 | Discussions and forums | `discussions` | ✓ | — | — |
 | Shopping ads | `shopping_ads` | ✓ | — | — |
+| News tab articles | `news` | ✓ | — | — |
 
 ---
 
@@ -134,6 +135,11 @@ for disc in data["discussions"]:
 for ad in data["shopping_ads"]:
     print(ad["title"], ad["metadata"]["price"], ad["metadata"]["merchant"])
 
+# News tab articles (Google News tab, tbm=nws) — metadata["source"] and metadata["published_time"]
+for article in data["news"]:
+    print(article["title"], article["url"])
+    print(article["metadata"]["source"], article["metadata"]["published_time"])
+
 # Metadata
 print(data["search_engine"])        # "google"
 print(data["query"])                # "python web scraping"
@@ -171,6 +177,10 @@ for post in results.people_saying:
 
 for ad in results.shopping_ads:
     print(ad.title, ad.metadata["price"], ad.metadata["merchant"])
+
+for article in results.news:
+    print(article.title, article.url)
+    print(article.metadata["source"], article.metadata["published_time"])
 
 # Convert to JSON or Markdown directly on the model
 json_str = results.to_json()
@@ -258,6 +268,7 @@ md_str = results.to_markdown()
       }
     }
   ],
+  "news": [],
   "detection_confidence": 0.95,
   "parsed_at": "2026-02-21T00:00:00Z",
   "metadata": {}
@@ -318,6 +329,16 @@ I work for a mid-sized company as a Procurement Manager...
 **Price:** $51.19
 **Merchant:** Contacts Direct
 **URL:** http://www.google.com/aclk?sa=L&ai=...
+
+## News Results
+
+### 1. Python web scraping tutorial released
+
+**Source:** Real Python · 2 days ago
+
+Learn how to scrape websites with Python using BeautifulSoup and Requests...
+
+**URL:** https://realpython.com/python-web-scraping/
 ```
 
 ---

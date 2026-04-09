@@ -105,6 +105,14 @@ for ad in data["shopping_ads"]:
     print("  Price:", ad["metadata"]["price"])
     print("  Merchant:", ad["metadata"]["merchant"])
 
+# News tab articles (list) — Google only (tbm=nws pages)
+# Each entry has metadata["source"] (publisher) and metadata["published_time"]
+for article in data["news"]:
+    print("News:", article["title"])
+    print("  URL:", article["url"])
+    print("  Source:", article["metadata"]["source"])
+    print("  Published:", article["metadata"]["published_time"])
+
 # Metadata
 print(data["query"])           # "python web scraping"
 print(data["total_results"])   # 26200000 or None
@@ -144,6 +152,10 @@ for disc in results.discussions:
 
 for ad in results.shopping_ads:
     print(ad.title, ad.metadata["price"], ad.metadata["merchant"])
+
+for article in results.news:
+    print(article.title, article.url)
+    print(article.metadata["source"], article.metadata["published_time"])
 
 # Serialize without going through SearchParser
 json_str = results.to_json()  # JSON string, indent=2 by default
