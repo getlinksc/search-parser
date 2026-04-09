@@ -118,7 +118,7 @@ class SearchParser:
         elif output_format == "markdown":
             return self._markdown_formatter.format(results)
         elif output_format == "dict":
-            result: dict[str, Any] = json.loads(results.model_dump_json())
+            result: dict[str, Any] = results.model_dump(mode="json")
             return result
         else:
             raise ValueError(f"Unknown output format: {output_format!r}")

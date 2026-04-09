@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] - 2026-04-08
+
+### Fixed
+
+- **JSON output: non-ASCII characters no longer escaped** — `JSONFormatter`, `SearchResults.to_json()`, and the `"dict"` output path in `SearchParser.parse()` all previously relied on Pydantic's `model_dump_json()` / `serde_json`, which escapes every non-ASCII character as `\uXXXX`. They now use `model_dump(mode="json")` + `json.dumps(..., ensure_ascii=False)`, so Korean, Japanese, Arabic, and all other non-Latin scripts are emitted as literal UTF-8 characters.
+
+---
+
 ## [0.5.0] - 2026-04-08
 
 ### Added

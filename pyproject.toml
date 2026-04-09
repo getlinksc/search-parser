@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "search-parser"
-version = "0.5.0"
+version = "0.5.1"
 description = "Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or dict — with auto-detection"
 readme = "README.md"
 requires-python = ">=3.10"
