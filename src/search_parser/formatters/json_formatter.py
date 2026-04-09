@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from search_parser.core.models import SearchResults
 from search_parser.formatters.base import BaseFormatter
 
@@ -18,4 +20,4 @@ class JSONFormatter(BaseFormatter):
         Returns:
             JSON string representation.
         """
-        return results.model_dump_json(indent=2)
+        return json.dumps(results.model_dump(mode="json"), indent=2, ensure_ascii=False)

@@ -74,7 +74,9 @@ class SearchResults(BaseModel):
         Returns:
             JSON string representation of all fields.
         """
-        return self.model_dump_json(indent=indent)
+        import json  # noqa: PLC0415
+
+        return json.dumps(self.model_dump(mode="json"), indent=indent, ensure_ascii=False)
 
     def to_markdown(self) -> str:
         """Render results as a Markdown string suitable for human or LLM consumption.
