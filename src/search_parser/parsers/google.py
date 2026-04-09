@@ -75,6 +75,7 @@ class GoogleParser(BaseParser):
             jobs=self._extract_jobs(soup),
             discussions=self._extract_discussions(soup),
             shopping_ads=self._extract_shopping_ads(soup),
+            news=self._extract_news_results(soup),
             detection_confidence=confidence,
         )
 
@@ -635,6 +636,57 @@ class GoogleParser(BaseParser):
                 )
             )
         return results
+
+    def _extract_news_results(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract news articles from Google News tab (div.SoaBEf cards)."""
+        results: list[SearchResult] = []
+        position = 1
+        for article in soup.find_all("div", class_="SoaBEf"):
+            if not isinstance(article, Tag):
+                continue
+            result = self._parse_news_result(article, position)
+            if result:
+                results.append(result)
+                position += 1
+        return results
+
+    def _parse_news_result(self, article: Tag, position: int) -> SearchResult | None:
+        """Parse a single Google News tab article card (div.SoaBEf)."""
+        link = article.find("a", class_="WlydOe")
+        if not isinstance(link, Tag):
+            return None
+        url = str(link.get("href", ""))
+        if not url:
+            return None
+
+        title_div = article.find("div", class_="n0jPhd")
+        title = clean_text(title_div.get_text()) if isinstance(title_div, Tag) else ""
+        if not title:
+            return None
+
+        source_div = article.find("div", class_="MgUUmf")
+        source = clean_text(source_div.get_text()) if isinstance(source_div, Tag) else None
+
+        desc_div = article.find("div", class_="UqSP2b")
+        description = clean_text(desc_div.get_text()) if isinstance(desc_div, Tag) else None
+
+        time_div = article.find("div", class_="OSrXXb")
+        published_time = clean_text(time_div.get_text()) if isinstance(time_div, Tag) else None
+
+        metadata: dict[str, object] = {}
+        if source:
+            metadata["source"] = source
+        if published_time:
+            metadata["published_time"] = published_time
+
+        return SearchResult(
+            title=title,
+            url=url,
+            description=description,
+            position=position,
+            result_type="news",
+            metadata=metadata,
+        )
 
     def _extract_featured_snippet(self, soup: BeautifulSoup) -> SearchResult | None:
         """Extract featured snippet if present."""

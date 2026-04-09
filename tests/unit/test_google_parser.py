@@ -520,6 +520,73 @@ class TestGoogleParser:
 
     # --- isolation check: non-organic types never leak into results ---
 
+    # --- seven cloak (short query, AI overview, PAA, no sponsored/jobs) ---
+
+    def test_parse_seven_cloak_basic(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.search_engine == "google"
+        assert results.query == "7"
+        assert results.detection_confidence >= 0.8
+        assert len(results.results) == 7
+
+    def test_parse_seven_cloak_organic_positions(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert [r.position for r in results.results] == list(range(1, 8))
+
+    def test_parse_seven_cloak_organic_titles(self, google_seven_cloak_html: str) -> None:
+        titles = [r.title for r in self.parser.parse(google_seven_cloak_html).results]
+        assert "7 (Prince song)" in titles
+        assert "7 Brew Drive-thru Coffee" in titles
+
+    def test_parse_seven_cloak_organic_urls(self, google_seven_cloak_html: str) -> None:
+        for r in self.parser.parse(google_seven_cloak_html).results:
+            assert r.url.startswith("https://")
+            assert r.result_type == "organic"
+
+    def test_parse_seven_cloak_total_results(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.total_results == 25_270_000_000
+
+    def test_parse_seven_cloak_ai_overview(self, google_seven_cloak_html: str) -> None:
+        ai = self.parser.parse(google_seven_cloak_html).ai_overview
+        assert ai is not None
+        assert ai.title == "AI Overview"
+        assert ai.description is not None
+        assert "prime" in ai.description.lower()
+        assert ai.result_type == "ai_overview"
+
+    def test_parse_seven_cloak_ai_overview_sources(self, google_seven_cloak_html: str) -> None:
+        ai = self.parser.parse(google_seven_cloak_html).ai_overview
+        assert ai is not None
+        sources = ai.metadata.get("sources", [])
+        assert isinstance(sources, list)
+        assert any(s["url"].startswith("http") for s in sources)
+
+    def test_parse_seven_cloak_people_also_ask(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert len(results.people_also_ask) == 4
+        questions = [r.title for r in results.people_also_ask]
+        assert "Why is 7 a special number?" in questions
+        assert "What does 7 mean spiritually?" in questions
+
+    def test_parse_seven_cloak_no_sponsored(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.sponsored == []
+
+    def test_parse_seven_cloak_no_jobs(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.jobs == []
+
+    def test_parse_seven_cloak_no_discussions(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.discussions == []
+
+    def test_parse_seven_cloak_no_shopping_ads(self, google_seven_cloak_html: str) -> None:
+        results = self.parser.parse(google_seven_cloak_html)
+        assert results.shopping_ads == []
+
+    # --- isolation check: non-organic types never leak into results ---
+
     def test_all_dedicated_fields_absent_from_organic(self, google_web_scraping_html: str) -> None:
         non_organic = {
             "featured_snippet",
@@ -532,7 +599,62 @@ class TestGoogleParser:
             "job",
             "discussion",
             "shopping_ad",
+            "news",
         }
         results = self.parser.parse(google_web_scraping_html)
         for r in results.results:
             assert r.result_type not in non_organic
+
+    # --- news tab ---
+
+    def test_parse_news_tab_count(self, google_news_tab_html: str) -> None:
+        results = self.parser.parse(google_news_tab_html)
+        assert len(results.news) == 2
+
+    def test_parse_news_tab_result_type(self, google_news_tab_html: str) -> None:
+        for article in self.parser.parse(google_news_tab_html).news:
+            assert article.result_type == "news"
+
+    def test_parse_news_tab_positions(self, google_news_tab_html: str) -> None:
+        results = self.parser.parse(google_news_tab_html)
+        assert [a.position for a in results.news] == [1, 2]
+
+    def test_parse_news_tab_titles(self, google_news_tab_html: str) -> None:
+        titles = [a.title for a in self.parser.parse(google_news_tab_html).news]
+        assert "[강세 토픽] 비만 치료제 테마, 디앤디파마텍 +6.49%, 펩트론 +6.07% - 조선비즈" in titles
+        assert "[마감분석] 디앤디파마텍, 비만치료제 시장 기대감 속 약세 마감 : 금융" in titles
+
+    def test_parse_news_tab_urls(self, google_news_tab_html: str) -> None:
+        for article in self.parser.parse(google_news_tab_html).news:
+            assert article.url.startswith("https://")
+
+    def test_parse_news_tab_have_descriptions(self, google_news_tab_html: str) -> None:
+        for article in self.parser.parse(google_news_tab_html).news:
+            assert article.description is not None
+            assert len(article.description) > 0
+
+    def test_parse_news_tab_have_source_metadata(self, google_news_tab_html: str) -> None:
+        sources = [str(a.metadata["source"]) for a in self.parser.parse(google_news_tab_html).news]
+        assert "Chosunbiz" in sources
+        assert "재경일보" in sources
+
+    def test_parse_news_tab_have_published_time(self, google_news_tab_html: str) -> None:
+        for article in self.parser.parse(google_news_tab_html).news:
+            assert "published_time" in article.metadata
+            assert article.metadata["published_time"]
+
+    def test_parse_news_tab_not_in_organic(self, google_news_tab_html: str) -> None:
+        results = self.parser.parse(google_news_tab_html)
+        assert len(results.results) == 0
+
+    def test_parse_news_tab_total_results(self, google_news_tab_html: str) -> None:
+        results = self.parser.parse(google_news_tab_html)
+        assert results.total_results == 2
+
+    def test_parse_news_tab_detection_confidence(self, google_news_tab_html: str) -> None:
+        results = self.parser.parse(google_news_tab_html)
+        assert results.detection_confidence >= 0.8
+
+    def test_parse_no_news_returns_empty(self, google_organic_html: str) -> None:
+        results = self.parser.parse(google_organic_html)
+        assert results.news == []

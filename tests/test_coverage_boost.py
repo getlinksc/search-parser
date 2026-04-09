@@ -430,7 +430,8 @@ class TestMarkdownFormatterEdgeCases:
         results = SearchResults(
             search_engine="google",
             query="latest news",
-            results=[
+            results=[],
+            news=[
                 SearchResult(
                     title="Breaking News",
                     url="https://news.example.com",
