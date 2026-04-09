@@ -102,6 +102,13 @@ for ad in data["shopping_ads"]:
     print(ad["title"])
     print("  Price:", ad["metadata"]["price"])
     print("  Merchant:", ad["metadata"]["merchant"])
+
+# News tab articles (Google only — tbm=nws pages)
+for article in data["news"]:
+    print(article["title"])
+    print("  URL:", article["url"])
+    print("  Source:", article["metadata"]["source"])
+    print("  Published:", article["metadata"]["published_time"])
 ```
 
 ## Specifying the Engine
