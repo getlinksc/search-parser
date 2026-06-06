@@ -44,6 +44,10 @@ for q in data["people_also_ask"]:
 # Shopping ads (Google only)
 for ad in data["shopping_ads"]:
     print(ad["title"], ad["metadata"]["price"], ad["metadata"]["merchant"])
+
+# Local business pack (Google only)
+for biz in data["local_businesses"]:
+    print(biz["title"], biz["metadata"].get("rating"), biz["metadata"].get("phone"))
 ```
 
 Or work directly with the typed model and use `to_json()` / `to_markdown()`:
@@ -76,3 +80,4 @@ md_str = results.to_markdown()
 | Jobs | `jobs` | ✓ | — | — |
 | Discussions and forums | `discussions` | ✓ | — | — |
 | Shopping ads | `shopping_ads` | ✓ | — | — |
+| Local business pack | `local_businesses` | ✓ | — | — |

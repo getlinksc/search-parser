@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.4] - 2026-06-06
+
+### Added
+
+- `local_businesses: list[SearchResult]` field on `SearchResults` for Google local business pack results
+- `"local_business"` added to the `result_type` Literal in `SearchResult`
+- `_extract_local_businesses` and `_parse_local_business` methods on `GoogleParser` — extracts name, rating, review count, category, location, hours, phone, and sponsored flag from `div.cXedhc` cards
+- Markdown formatter renders `## Local Businesses` section with all available metadata fields
+- New fixtures (`personal_injury_lawyer_20260528_203801.html`, `iphone_15_review_20260528_204042.html`) and 16 new unit tests
+
+### Fixed
+
+- `search_parser.parsers.google_finance` and `search_parser.scrapers` were missing from the built package because the source files had never been committed to git — any app importing `search_parser` crashed at startup with `ModuleNotFoundError`
+
+---
+
 ## [0.5.2] - 2026-04-26
 
 ### Added
@@ -190,7 +206,13 @@ sponsored = results.sponsored         # list[SearchResult]
 - CI/CD workflows for testing, linting, coverage, and publishing.
 - Pre-commit hooks for ruff and mypy.
 
-[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/getlinksc/search-parser/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/getlinksc/search-parser/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/getlinksc/search-parser/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/getlinksc/search-parser/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/getlinksc/search-parser/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/getlinksc/search-parser/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/getlinksc/search-parser/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/getlinksc/search-parser/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/getlinksc/search-parser/compare/v0.1.0...v0.2.0
