@@ -1313,7 +1313,11 @@ wheels = [
 
 [[package]]
 name = "search-parser"
+<<<<<<< HEAD
 version = "0.5.1"
+=======
+version = "0.5.2"
+>>>>>>> a185d8a (adding business parsing)
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

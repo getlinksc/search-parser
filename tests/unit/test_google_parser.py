@@ -658,3 +658,105 @@ class TestGoogleParser:
     def test_parse_no_news_returns_empty(self, google_organic_html: str) -> None:
         results = self.parser.parse(google_organic_html)
         assert results.news == []
+
+    # --- local businesses ---
+
+    def test_parse_local_businesses_count(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        results = self.parser.parse(google_personal_injury_lawyer_html)
+        assert len(results.local_businesses) == 4
+
+    def test_parse_local_businesses_result_type(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
+            assert biz.result_type == "local_business"
+            assert biz.position == 0
+
+    def test_parse_local_businesses_names(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        names = [
+            r.title
+            for r in self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+        ]
+        assert "Marks & Harrison" in names
+        assert "Rodriguez Law Firm - Car Accident Injury Lawyer" in names
+
+    def test_parse_local_businesses_ratings(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
+            assert "rating" in biz.metadata
+            assert biz.metadata["rating"]
+
+    def test_parse_local_businesses_reviews(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+        marks = next(b for b in bizzes if b.title == "Marks & Harrison")
+        assert marks.metadata.get("reviews") == "425"
+
+    def test_parse_local_businesses_category(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
+            assert biz.metadata.get("category") == "Personal injury attorney"
+
+    def test_parse_local_businesses_location(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+        marks = next(b for b in bizzes if b.title == "Marks & Harrison")
+        assert marks.metadata.get("location") == "Alexandria, VA"
+
+    def test_parse_local_businesses_phone(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+        marks = next(b for b in bizzes if b.title == "Marks & Harrison")
+        assert marks.metadata.get("phone") == "(703) 884-1863"
+
+    def test_parse_local_businesses_hours(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
+            assert biz.metadata.get("hours") == "Open 24 hours"
+
+    def test_parse_local_businesses_sponsored_flag(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+        sponsored = [b for b in bizzes if b.metadata.get("sponsored")]
+        not_sponsored = [b for b in bizzes if not b.metadata.get("sponsored")]
+        assert len(sponsored) == 1
+        assert sponsored[0].title == "Ashcraft & Gerel, LLP"
+        assert len(not_sponsored) == 3
+
+    def test_parse_local_businesses_not_in_organic(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        results = self.parser.parse(google_personal_injury_lawyer_html)
+        for r in results.results:
+            assert r.result_type != "local_business"
+
+    def test_parse_no_local_businesses_returns_empty(self, google_organic_html: str) -> None:
+        results = self.parser.parse(google_organic_html)
+        assert results.local_businesses == []
+
+    # --- ai_overview from new HTML fixtures ---
+
+    def test_parse_ai_overview_iphone_15(self, google_iphone_15_review_html: str) -> None:
+        results = self.parser.parse(google_iphone_15_review_html)
+        assert results.ai_overview is not None
+        assert results.ai_overview.title == "AI Overview"
+        assert results.ai_overview.description is not None
+        assert "iphone" in results.ai_overview.description.lower()
+        assert results.ai_overview.result_type == "ai_overview"
+
+    def test_parse_ai_overview_loading_state_returns_none(
+        self, google_personal_injury_lawyer_html: str
+    ) -> None:
+        results = self.parser.parse(google_personal_injury_lawyer_html)
+        assert results.ai_overview is None

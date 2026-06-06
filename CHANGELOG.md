@@ -9,6 +9,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.2] - 2026-04-26
+
+### Added
+
+- **`GoogleFinanceParser`** — parses Google Finance HTML pages by extracting the
+  embedded `AF_initDataCallback` data blocks (no network calls required).
+  Supports stocks, ETFs, indices, crypto, and FX pairs.  Returns a
+  `SearchResults` object with dedicated fields:
+  - `stock_quote` — price, change, change %, previous close, currency, timezone,
+    after-hours data
+  - `company_info` — description, CEO, employees, market cap, P/E ratio,
+    52-week range, sector, headquarters
+  - `stock_chart` — time-series of date / price / volume points
+  - `financial_news` — news items with title, URL, source, and Unix timestamp
+  - `financial_statements` — income statement, balance sheet, and cash flow
+    data (stocks only; uses recursive positional-array detection)
+
+- **`GoogleFinanceScraper`** — standalone class that fetches live data from
+  Google Finance's internal `batchexecute` RPC endpoint using only the Python
+  standard library (`urllib`).  No API key required.  Returns typed dataclasses
+  (`GoogleFinanceData`, `FinancialQuote`, `CompanyInfo`, `ChartData`,
+  `ChartPoint`, `NewsItem`, `FinancialStatement`).
+
+- **New `result_type` literals** — `stock_quote`, `company_info`, `stock_chart`,
+  `financials`, `financial_news` added to `SearchResult.result_type`.
+
+- **New `SearchResults` fields** — `stock_quote`, `company_info`, `stock_chart`,
+  `financial_statements`, `financial_news` (all default to `None` / `[]` so
+  existing code is unaffected).
+
+- **Auto-detection** — `SearchEngineDetector` now recognises Google Finance
+  pages (canonical URL or `AF_dataServiceRequests` script marker) before
+  falling through to the generic Google check.
+
+### Usage
+
+```python
+# Parse a saved Google Finance HTML page
+from search_parser import GoogleFinanceParser
+
+parser = GoogleFinanceParser()
+results = parser.parse(html)
+
+print(results.query)                          # "GOOGL:NASDAQ"
+print(results.stock_quote.metadata["price"]) # 339.32
+print(results.company_info.metadata["ceo"])  # "Sundar Pichai"
+print(results.financial_news[0].title)
+
+# Fetch live data (no API key needed)
+from search_parser import GoogleFinanceScraper
+
+scraper = GoogleFinanceScraper()
+data = scraper.scrape("GOOGL:NASDAQ")   # stocks
+data = scraper.scrape("BTC-USD")        # crypto
+data = scraper.scrape("EUR-USD")        # FX
+
+print(data.quote.price)
+print(data.company.sector)
+print(data.chart.points[0].date)
+```
+
+---
+
 ## [0.5.1] - 2026-04-08
 
 ### Fixed

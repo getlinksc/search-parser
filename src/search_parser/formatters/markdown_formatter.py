@@ -75,6 +75,12 @@ class MarkdownFormatter(BaseFormatter):
             for result in results.jobs:
                 lines.extend(self._format_job(result))
 
+        if results.local_businesses:
+            lines.append("## Local Businesses")
+            lines.append("")
+            for result in results.local_businesses:
+                lines.extend(self._format_local_business(result))
+
         if results.discussions:
             lines.append("## Discussions and Forums")
             lines.append("")
@@ -166,6 +172,28 @@ class MarkdownFormatter(BaseFormatter):
             lines.append(result.description)
             lines.append("")
         lines.append(f"**URL:** {result.url}")
+        lines.append("")
+        return lines
+
+    def _format_local_business(self, result: SearchResult) -> list[str]:
+        """Format a local business pack result."""
+        lines: list[str] = []
+        sponsored = " (Sponsored)" if result.metadata.get("sponsored") else ""
+        lines.append(f"### {result.title}{sponsored}")
+        lines.append("")
+        if result.metadata.get("rating"):
+            rating_str = f"**Rating:** {result.metadata['rating']}"
+            if result.metadata.get("reviews"):
+                rating_str += f" ({result.metadata['reviews']} reviews)"
+            lines.append(rating_str)
+        if result.metadata.get("category"):
+            lines.append(f"**Category:** {result.metadata['category']}")
+        if result.metadata.get("location"):
+            lines.append(f"**Location:** {result.metadata['location']}")
+        if result.metadata.get("hours"):
+            lines.append(f"**Hours:** {result.metadata['hours']}")
+        if result.metadata.get("phone"):
+            lines.append(f"**Phone:** {result.metadata['phone']}")
         lines.append("")
         return lines
 
