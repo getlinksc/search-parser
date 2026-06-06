@@ -44,6 +44,7 @@ class SearchEngineDetector:
         candidates: list[DetectionResult] = []
 
         for check in [
+            self._check_google_finance,
             self._check_meta_tags,
             self._check_dom_structure,
             self._check_url_patterns,
@@ -59,6 +60,16 @@ class SearchEngineDetector:
         if best.confidence < 0.3:
             return None
         return best
+
+    def _check_google_finance(self, soup: BeautifulSoup) -> DetectionResult | None:
+        """Detect Google Finance pages before the generic Google check."""
+        canonical = soup.find("link", attrs={"rel": "canonical"})
+        if isinstance(canonical, Tag) and "google.com/finance" in str(canonical.get("href", "")):
+            return DetectionResult(engine="google_finance", confidence=0.97)
+        for script in soup.find_all("script"):
+            if script.string and "AF_dataServiceRequests" in script.string:
+                return DetectionResult(engine="google_finance", confidence=0.85)
+        return None
 
     def _check_meta_tags(self, soup: BeautifulSoup) -> DetectionResult | None:
         """Check HTML meta tags for search engine identification."""

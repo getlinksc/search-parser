@@ -82,3 +82,23 @@ def google_seven_cloak_html() -> str:
 @pytest.fixture()
 def google_news_tab_html() -> str:
     return (FIXTURES_DIR / "google" / "news_tab_search.html").read_text()
+
+
+@pytest.fixture()
+def google_personal_injury_lawyer_html() -> str:
+    return (FIXTURES_DIR / "google" / "personal_injury_lawyer_20260528_203801.html").read_text()
+
+
+@pytest.fixture()
+def google_iphone_15_review_html() -> str:
+    return (FIXTURES_DIR / "google" / "iphone_15_review_20260528_204042.html").read_text()
+
+
+@pytest.fixture()
+def google_finance_quote_html() -> str:
+    return (FIXTURES_DIR / "google_finance" / "quote.html").read_text()
+
+
+@pytest.fixture()
+def google_finance_crypto_html() -> str:
+    return (FIXTURES_DIR / "google_finance" / "crypto.html").read_text()

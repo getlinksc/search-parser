@@ -76,6 +76,7 @@ class GoogleParser(BaseParser):
             discussions=self._extract_discussions(soup),
             shopping_ads=self._extract_shopping_ads(soup),
             news=self._extract_news_results(soup),
+            local_businesses=self._extract_local_businesses(soup),
             detection_confidence=confidence,
         )
 
@@ -685,6 +686,96 @@ class GoogleParser(BaseParser):
             description=description,
             position=position,
             result_type="news",
+            metadata=metadata,
+        )
+
+    def _extract_local_businesses(self, soup: BeautifulSoup) -> list[SearchResult]:
+        """Extract local business pack results (div.cXedhc cards)."""
+        results: list[SearchResult] = []
+        for item in soup.find_all("div", class_="cXedhc"):
+            if not isinstance(item, Tag):
+                continue
+            result = self._parse_local_business(item)
+            if result:
+                results.append(result)
+        return results
+
+    def _parse_local_business(self, item: Tag) -> SearchResult | None:
+        """Parse a single local business pack card (div.cXedhc)."""
+        name_el = item.find("span", class_="OSrXXb")
+        if not isinstance(name_el, Tag):
+            return None
+        name = clean_text(name_el.get_text())
+        if not name:
+            return None
+
+        rating_el = item.find("span", class_="yi40Hd")
+        rating = clean_text(rating_el.get_text()) if isinstance(rating_el, Tag) else None
+
+        reviews_el = item.find("span", class_="RDApEe")
+        reviews_raw = clean_text(reviews_el.get_text()) if isinstance(reviews_el, Tag) else None
+        reviews = re.sub(r"[()]", "", reviews_raw).strip() if reviews_raw else None
+
+        sponsored_el = item.find("span", class_="gghBu")
+        sponsored = isinstance(sponsored_el, Tag) and "sponsored" in sponsored_el.get_text().lower()
+
+        # Un-classed leaf divs carry category, location, hours, and phone
+        leaf_divs = [
+            d
+            for d in item.find_all("div")
+            if isinstance(d, Tag) and not d.get("class") and not d.find("div") and d.get_text(strip=True)
+        ]
+
+        category: str | None = None
+        location: str | None = None
+        hours: str | None = None
+        phone: str | None = None
+
+        for div in leaf_divs:
+            text = div.get_text(separator="|", strip=True)
+            # "4.9|(813)|· Personal injury attorney" — category follows "· "
+            cat_match = re.search(r"·\s+(.+)$", text.replace("|", " "))
+            if cat_match and not category:
+                candidate = cat_match.group(1).strip()
+                if not re.search(r"\d+\s*(hours?|year|min)", candidate, re.I):
+                    category = candidate
+                    continue
+            # "15+ years in business · Chantilly, VA" — split on " · "
+            if "years in business" in text or re.search(r"\d+\+?\s+year", text):
+                parts = text.replace("|", " ").split(" · ", 1)
+                if len(parts) == 2:
+                    location = parts[1].strip()
+                continue
+            # "Open 24 hours · (703) 952-3191"
+            if re.search(r"open|closed|\d{1,2}:\d{2}", text, re.I):
+                parts = text.replace("|", " ").split("· ", 1)
+                hours = parts[0].strip()
+                if len(parts) == 2:
+                    phone = parts[1].strip()
+                continue
+
+        metadata: dict[str, object] = {}
+        if rating:
+            metadata["rating"] = rating
+        if reviews:
+            metadata["reviews"] = reviews
+        if category:
+            metadata["category"] = category
+        if location:
+            metadata["location"] = location
+        if hours:
+            metadata["hours"] = hours
+        if phone:
+            metadata["phone"] = phone
+        if sponsored:
+            metadata["sponsored"] = True
+
+        return SearchResult(
+            title=name,
+            url="",
+            description=None,
+            position=0,
+            result_type="local_business",
             metadata=metadata,
         )
 

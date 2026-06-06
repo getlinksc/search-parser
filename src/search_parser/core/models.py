@@ -30,6 +30,12 @@ class SearchResult(BaseModel):
         "job",
         "discussion",
         "shopping_ad",
+        "stock_quote",
+        "company_info",
+        "stock_chart",
+        "financials",
+        "financial_news",
+        "local_business",
     ] = "organic"
     metadata: dict[str, object] = Field(default_factory=dict)
 
@@ -60,6 +66,14 @@ class SearchResults(BaseModel):
     discussions: list[SearchResult] = Field(default_factory=list)
     shopping_ads: list[SearchResult] = Field(default_factory=list)
     news: list[SearchResult] = Field(default_factory=list)
+    local_businesses: list[SearchResult] = Field(default_factory=list)
+
+    # Google Finance dedicated fields
+    stock_quote: Optional[SearchResult] = None  # noqa: UP045
+    company_info: Optional[SearchResult] = None  # noqa: UP045
+    stock_chart: Optional[SearchResult] = None  # noqa: UP045
+    financial_statements: Optional[SearchResult] = None  # noqa: UP045
+    financial_news: list[SearchResult] = Field(default_factory=list)
 
     detection_confidence: float = Field(ge=0.0, le=1.0)
     parsed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
