@@ -112,6 +112,15 @@ for article in results.news:
     print(article.title)
     print(f"  {article.metadata['source']} · {article.metadata['published_time']}")
     print(f"  {article.url}")
+
+# Local business pack — metadata includes rating, reviews, category, location, hours, phone, sponsored
+for biz in results.local_businesses:
+    print(biz.title)
+    print(f"  {biz.metadata['rating']} ({biz.metadata.get('reviews')} reviews) · {biz.metadata.get('category')}")
+    print(f"  {biz.metadata.get('location')} · {biz.metadata.get('phone')}")
+    print(f"  {biz.metadata.get('hours')}")
+    if biz.metadata.get("sponsored"):
+        print("  (sponsored)")
 ```
 
 ## Using to_json() and to_markdown()

@@ -109,6 +109,17 @@ for article in data["news"]:
     print("  URL:", article["url"])
     print("  Source:", article["metadata"]["source"])
     print("  Published:", article["metadata"]["published_time"])
+
+# Local business pack (Google only)
+for biz in data["local_businesses"]:
+    print(biz["title"])
+    print("  Rating:", biz["metadata"].get("rating"), f"({biz['metadata'].get('reviews')} reviews)")
+    print("  Category:", biz["metadata"].get("category"))
+    print("  Location:", biz["metadata"].get("location"))
+    print("  Phone:", biz["metadata"].get("phone"))
+    print("  Hours:", biz["metadata"].get("hours"))
+    if biz["metadata"].get("sponsored"):
+        print("  (sponsored)")
 ```
 
 ## Specifying the Engine
