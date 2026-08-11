@@ -82,6 +82,13 @@ requests: list[dict[str, Any]] = [
 
 Annotation only — no runtime change.
 
+### CI
+
+- Dropped the `3.9` leg from the test matrix and the `Programming Language :: Python :: 3.9` classifier. `requires-python` has been `>=3.10` since 0.5.3, so that matrix job could only ever fail at `uv sync`.
+- The coverage badge writes to a gist outside this repo. It is now skipped when `GIST_SECRET`/`GIST_ID` are unset and marked `continue-on-error`, so an expired token can no longer take the whole pipeline red over a cosmetic badge.
+- The publish job now declares `contents: read` alongside `id-token: write`. Declaring any `permissions` key replaces the entire default set, so `actions/checkout` was running with a token that had no repository access.
+- The publish job fails fast when the release tag does not match `version` in `pyproject.toml`, so a release cut on the wrong commit can't ship a mislabeled artifact.
+
 Tooling Python targets were also brought in line with `requires-python = ">=3.10"`: mypy `python_version` and ruff `target-version` were both still on 3.9, and current mypy rejects `python_version = "3.9"` as a config error. The stale `markdownify.*` mypy override (flagged by `warn_unused_configs`) was dropped; `markdownify` remains a declared dependency.
 
 ---

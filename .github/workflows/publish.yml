@@ -9,6 +9,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
+      # Declaring any permission replaces the whole default set, so `contents: read`
+      # has to be spelled out - without it `actions/checkout` gets a token with no
+      # repo access and fails with "Repository not found" on a private repo.
+      contents: read
       id-token: write
 
     steps:
@@ -19,6 +23,18 @@ jobs:
 
       - name: Set up Python
         run: uv python install 3.11
+
+      # Guard against a release cut on the wrong commit (or the wrong repo):
+      # publishing a tag whose tree carries a different version ships the wrong artifact.
+      - name: Verify tag matches project version
+        if: github.event_name == 'release'
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION=$(grep -m1 '^version = ' pyproject.toml | cut -d'"' -f2)
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Release tag ${GITHUB_REF_NAME} does not match pyproject.toml version ${VERSION}"
+            exit 1
+          fi
 
       - name: Build package
         run: uv build
