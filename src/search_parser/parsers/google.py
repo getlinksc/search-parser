@@ -148,13 +148,13 @@ class GoogleParser(BaseParser):
             h3 = item.find("h3")
             if not isinstance(link, Tag) or not isinstance(h3, Tag):
                 return None
-            url = str(link.get("href", ""))
+            url = self._decode_google_redirect(str(link.get("href", "")))
             title = clean_text(h3.get_text())
         else:
             link = link_container.find("a")
             if not isinstance(link, Tag):
                 return None
-            url = str(link.get("href", ""))
+            url = self._decode_google_redirect(str(link.get("href", "")))
             h3 = link.find("h3")
             title = clean_text(h3.get_text()) if isinstance(h3, Tag) else ""
 
@@ -216,7 +216,12 @@ class GoogleParser(BaseParser):
 
     @staticmethod
     def _decode_google_redirect(href: str) -> str:
-        """Decode a Google /url?q=... redirect to the actual destination URL."""
+        """Decode a Google /url?q=... redirect to the actual destination URL.
+
+        Some Google buckets instead serve ``/goto?url=<blob>`` where the blob is
+        encrypted server-side — the destination is nowhere in the HTML, so those
+        hrefs are returned unchanged for the caller to resolve over the network.
+        """
         if not href:
             return href
         m = re.search(r"/url\?q=([^&]+)", href)
