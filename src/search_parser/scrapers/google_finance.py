@@ -168,7 +168,7 @@ class GoogleFinanceScraper:
         t = _ticker_tuple(ticker)
         is_crypto = "-" in ticker and ":" not in ticker
 
-        requests = [
+        requests: list[dict[str, Any]] = [
             {"id": "xh8wxf", "req": [[t], 1]},
             {"id": "HqGpWd", "req": [[t]]},
             {"id": "Pr8h2e", "req": [[t]]},
