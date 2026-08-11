@@ -179,7 +179,9 @@ class GoogleFinanceScraper:
         url = f"{_BATCHEXECUTE_URL}?rpcids={rpc_ids}&source-path=/finance/quote/{ticker}&hl=en&gl=us&rt=c"
 
         chunks = self._post(url, _build_body(requests))
-        get: Any = lambda rpc_id: next((c["data"] for c in chunks if c["id"] == rpc_id), None)
+
+        def get(rpc_id: str) -> Any:
+            return next((c["data"] for c in chunks if c["id"] == rpc_id), None)
 
         if get("xh8wxf") is None:
             raise ValueError(f"No data returned for {ticker!r}")
@@ -307,12 +309,23 @@ def _extract_chart(data: Any) -> ChartData | None:
         return None
 
     points: list[ChartPoint] = []
-    for period in (chart_raw[3] if len(chart_raw) > 3 and isinstance(chart_raw[3], list) else []):
-        for pt in (period[1] if isinstance(period, list) and len(period) > 1 else []):
-            if not (isinstance(pt, list) and len(pt) >= 2 and isinstance(pt[0], list) and isinstance(pt[1], list)):
+    for period in chart_raw[3] if len(chart_raw) > 3 and isinstance(chart_raw[3], list) else []:
+        for pt in period[1] if isinstance(period, list) and len(period) > 1 else []:
+            if not (
+                isinstance(pt, list)
+                and len(pt) >= 2
+                and isinstance(pt[0], list)
+                and isinstance(pt[1], list)
+            ):
                 continue
             y, m, d = pt[0][0], pt[0][1], pt[0][2]
-            points.append(ChartPoint(date=f"{y}-{m:02d}-{d:02d}", price=pt[1][0], volume=pt[2] if len(pt) > 2 else None))
+            points.append(
+                ChartPoint(
+                    date=f"{y}-{m:02d}-{d:02d}",
+                    price=pt[1][0],
+                    volume=pt[2] if len(pt) > 2 else None,
+                )
+            )
 
     return ChartData(previous_close=chart_raw[6] if len(chart_raw) > 6 else None, points=points)
 
@@ -329,12 +342,14 @@ def _extract_news(data: Any) -> list[NewsItem]:
     for item in news_arr:
         if not (isinstance(item, list) and len(item) > 1 and item[1]):
             continue
-        items.append(NewsItem(
-            url=str(item[0] or ""),
-            title=str(item[1] or ""),
-            source=str(item[2]) if len(item) > 2 and item[2] else None,
-            timestamp=int(item[4]) if len(item) > 4 and item[4] else None,
-        ))
+        items.append(
+            NewsItem(
+                url=str(item[0] or ""),
+                title=str(item[1] or ""),
+                source=str(item[2]) if len(item) > 2 and item[2] else None,
+                timestamp=int(item[4]) if len(item) > 4 and item[4] else None,
+            )
+        )
     return items
 
 
@@ -381,7 +396,9 @@ def _row_to_statement(row: list[Any]) -> FinancialStatement:
         revenue_growth_yoy=_get(11),
         currency=_get(16),
         period=period_str,
-        period_type="annual" if isinstance(period, list) and len(period) > 1 and period[1] == 12 else "quarterly",
+        period_type="annual"
+        if isinstance(period, list) and len(period) > 1 and period[1] == 12
+        else "quarterly",
         pe_ratio=_get(18),
         total_assets=_get(23),
         total_liabilities=_get(24),

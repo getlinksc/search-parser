@@ -560,7 +560,9 @@ class GoogleParser(BaseParser):
                 continue
             url = str(link.get("href", "")) if isinstance(link, Tag) else ""
             company = clean_text(company_div.get_text()) if isinstance(company_div, Tag) else None
-            location = clean_text(location_div.get_text()) if isinstance(location_div, Tag) else None
+            location = (
+                clean_text(location_div.get_text()) if isinstance(location_div, Tag) else None
+            )
 
             # Salary has the extra QZEeP class; employment type and other tags share K3eUK only
             salary_div = item.find("div", class_="QZEeP")
@@ -728,7 +730,10 @@ class GoogleParser(BaseParser):
         leaf_divs = [
             d
             for d in item.find_all("div")
-            if isinstance(d, Tag) and not d.get("class") and not d.find("div") and d.get_text(strip=True)
+            if isinstance(d, Tag)
+            and not d.get("class")
+            and not d.find("div")
+            and d.get_text(strip=True)
         ]
 
         category: str | None = None
