@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Chore
 
 - Cleared all outstanding `ruff check` errors (unused `json`/`pytest` imports, `try`/`except`/`pass` → `contextlib.suppress`, lambda assignment → `def`) and applied `ruff format` to the four files that were failing `--check`, so the lint workflow passes
+- Cleared the two `mypy` errors in `scrapers/google_finance.py` — the `requests` batchexecute payload list is annotated `list[dict[str, Any]]` so its element type is no longer joined down to `object`
+- Raised the tooling Python target to match `requires-python = ">=3.10"` (mypy `python_version` and ruff `target-version` were both still on 3.9; mypy 1.x rejects `python_version = "3.9"` outright), and dropped the stale `markdownify.*` mypy override
 
 ---
 

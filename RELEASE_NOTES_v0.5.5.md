@@ -2,7 +2,7 @@
 
 **Released:** 2026-08-11
 
-A maintenance release: one parser correctness fix, a version-reporting fix, and a clean lint slate.
+A maintenance release: one parser correctness fix, a version-reporting fix, and a clean lint/type slate.
 
 ---
 
@@ -54,12 +54,35 @@ Callers that need absolute URLs should check for a leading `/` on `result.url` a
 
 ## Chore
 
-`ruff check` and `ruff format --check` both failed on `main` before this release; the lint workflow now passes clean.
+`ruff check`, `ruff format --check` and `mypy` all failed on `main` before this release; the lint workflow now passes clean.
 
 - Removed unused `json` import from `core/parser.py` and unused `pytest` import from `tests/unit/test_google_finance_parser.py` (`F401`)
 - `parsers/google_finance.py`: `try`/`except json.JSONDecodeError`/`pass` → `contextlib.suppress` (`SIM105`)
 - `scrapers/google_finance.py`: the `get` lambda assignment is now a nested `def` (`E731`)
 - Applied `ruff format` to the four files failing `--check` — `parsers/google.py`, `parsers/google_finance.py`, `scrapers/google_finance.py`, `tests/unit/test_google_parser.py`. Formatting only; no behavior change.
+
+### Type checking
+
+`uv run mypy src/search_parser` reported two errors and a config error:
+
+```
+pyproject.toml: [mypy]: python_version: Python 3.9 is not supported (must be 3.10 or higher)
+scrapers/google_finance.py:178: error: Value of type "object" is not indexable  [index]
+scrapers/google_finance.py:181: error: Argument 1 to "_build_body" has incompatible type "list[object]"; expected "list[dict[str, Any]]"  [arg-type]
+```
+
+The batchexecute payload list mixes `str` and nested-`list` values, so mypy joined the dict value types down to `object` and inferred the list as `list[object]`. It is now annotated explicitly:
+
+```python
+requests: list[dict[str, Any]] = [
+    {"id": "xh8wxf", "req": [[t], 1]},
+    ...
+]
+```
+
+Annotation only — no runtime change.
+
+Tooling Python targets were also brought in line with `requires-python = ">=3.10"`: mypy `python_version` and ruff `target-version` were both still on 3.9, and current mypy rejects `python_version = "3.9"` as a config error. The stale `markdownify.*` mypy override (flagged by `warn_unused_configs`) was dropped; `markdownify` remains a declared dependency.
 
 ---
 
@@ -74,6 +97,7 @@ No breaking changes and no API surface changes. The only behavioral difference i
 - 287 tests pass (`uv run pytest`)
 - `uv run ruff check .` — all checks passed
 - `uv run ruff format --check .` — 36 files already formatted
+- `uv run mypy src/search_parser` — success, no issues found in 21 source files
 
 ---
 
@@ -84,5 +108,7 @@ No breaking changes and no API surface changes. The only behavioral difference i
 - Documented on `_decode_google_redirect` that `/goto?url=` blobs are encrypted server-side and are returned unchanged for the caller to resolve
 - Fixed all outstanding `ruff check` errors (`F401` ×2, `SIM105`, `E731`)
 - Applied `ruff format` to four files that were failing `ruff format --check`
+- Fixed both `mypy` errors in `scrapers/google_finance.py` by annotating the batchexecute payload as `list[dict[str, Any]]`
+- Raised mypy `python_version` and ruff `target-version` to 3.10 to match `requires-python`, and removed the unused `markdownify.*` mypy override
 
 [Full diff](https://github.com/getlinksc/search-parser/compare/v0.5.4...v0.5.5)
