@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.5] - 2026-08-11
+
+### Fixed
+
+- Desktop organic results returned Google redirect hrefs (`/url?q=https%3A%2F%2F...`) raw instead of the destination URL — `_parse_organic_result` now runs both desktop branches through `_decode_google_redirect`, matching what the mobile path already did
+- `__version__` was pinned at `0.5.3` while `pyproject.toml` shipped `0.5.4`, so `search_parser.__version__` reported the wrong release — both are now bumped together
+
+### Changed
+
+- `_decode_google_redirect` docstring documents that some Google buckets serve `/goto?url=<blob>` hrefs which are encrypted server-side; the destination is not present anywhere in the HTML, so those are returned unchanged for the caller to resolve over the network
+
+### Chore
+
+- Cleared all outstanding `ruff check` errors (unused `json`/`pytest` imports, `try`/`except`/`pass` → `contextlib.suppress`, lambda assignment → `def`) and applied `ruff format` to the four files that were failing `--check`, so the lint workflow passes
+
+---
+
 ## [0.5.4] - 2026-06-06
 
 ### Added
