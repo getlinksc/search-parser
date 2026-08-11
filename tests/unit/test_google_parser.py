@@ -350,7 +350,9 @@ class TestGoogleParser:
             assert disc.description is not None
             assert len(disc.description) > 0
 
-    def test_parse_discussions_have_source_metadata(self, google_supply_chain_jobs_html: str) -> None:
+    def test_parse_discussions_have_source_metadata(
+        self, google_supply_chain_jobs_html: str
+    ) -> None:
         for disc in self.parser.parse(google_supply_chain_jobs_html).discussions:
             assert "source" in disc.metadata
             assert disc.metadata["source"]
@@ -367,9 +369,7 @@ class TestGoogleParser:
 
     # --- mobile organic results ---
 
-    def test_parse_mobile_organic_results(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_mobile_organic_results(self, google_weekly_contacts_mobile_html: str) -> None:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert results.search_engine == "google"
         assert results.query == "contact lens weekly"
@@ -412,9 +412,7 @@ class TestGoogleParser:
 
     # --- mobile people_also_ask ---
 
-    def test_parse_mobile_people_also_ask(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_mobile_people_also_ask(self, google_weekly_contacts_mobile_html: str) -> None:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert len(results.people_also_ask) == 3
         questions = [r.title for r in results.people_also_ask]
@@ -430,9 +428,7 @@ class TestGoogleParser:
 
     # --- mobile people_also_search ---
 
-    def test_parse_mobile_people_also_search(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_mobile_people_also_search(self, google_weekly_contacts_mobile_html: str) -> None:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert len(results.people_also_search) == 6
         titles = [r.title for r in results.people_also_search]
@@ -447,9 +443,7 @@ class TestGoogleParser:
 
     # --- mobile ai_overview ---
 
-    def test_parse_mobile_ai_overview(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_mobile_ai_overview(self, google_weekly_contacts_mobile_html: str) -> None:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert results.ai_overview is not None
         assert results.ai_overview.title == "AI Overview"
@@ -470,9 +464,7 @@ class TestGoogleParser:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert len(results.shopping_ads) == 4
 
-    def test_parse_shopping_ads_have_titles(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_shopping_ads_have_titles(self, google_weekly_contacts_mobile_html: str) -> None:
         ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
         titles = [r.title for r in ads]
         assert "ALCON - Precision7 , 12 Pack" in titles
@@ -489,9 +481,7 @@ class TestGoogleParser:
             assert ad.metadata["price"]
             assert ad.metadata["merchant"]
 
-    def test_parse_shopping_ads_prices(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_shopping_ads_prices(self, google_weekly_contacts_mobile_html: str) -> None:
         ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
         prices = [str(r.metadata["price"]) for r in ads]
         assert "$51.19" in prices
@@ -499,9 +489,7 @@ class TestGoogleParser:
         assert "$48.79" in prices
         assert "$72.79" in prices
 
-    def test_parse_shopping_ads_merchants(
-        self, google_weekly_contacts_mobile_html: str
-    ) -> None:
+    def test_parse_shopping_ads_merchants(self, google_weekly_contacts_mobile_html: str) -> None:
         ads = self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads
         merchants = [str(r.metadata["merchant"]) for r in ads]
         assert "Contacts Direct" in merchants
@@ -621,7 +609,9 @@ class TestGoogleParser:
 
     def test_parse_news_tab_titles(self, google_news_tab_html: str) -> None:
         titles = [a.title for a in self.parser.parse(google_news_tab_html).news]
-        assert "[강세 토픽] 비만 치료제 테마, 디앤디파마텍 +6.49%, 펩트론 +6.07% - 조선비즈" in titles
+        assert (
+            "[강세 토픽] 비만 치료제 테마, 디앤디파마텍 +6.49%, 펩트론 +6.07% - 조선비즈" in titles
+        )
         assert "[마감분석] 디앤디파마텍, 비만치료제 시장 기대감 속 약세 마감 : 금융" in titles
 
     def test_parse_news_tab_urls(self, google_news_tab_html: str) -> None:
@@ -661,9 +651,7 @@ class TestGoogleParser:
 
     # --- local businesses ---
 
-    def test_parse_local_businesses_count(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_count(self, google_personal_injury_lawyer_html: str) -> None:
         results = self.parser.parse(google_personal_injury_lawyer_html)
         assert len(results.local_businesses) == 4
 
@@ -674,53 +662,38 @@ class TestGoogleParser:
             assert biz.result_type == "local_business"
             assert biz.position == 0
 
-    def test_parse_local_businesses_names(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_names(self, google_personal_injury_lawyer_html: str) -> None:
         names = [
-            r.title
-            for r in self.parser.parse(google_personal_injury_lawyer_html).local_businesses
+            r.title for r in self.parser.parse(google_personal_injury_lawyer_html).local_businesses
         ]
         assert "Marks & Harrison" in names
         assert "Rodriguez Law Firm - Car Accident Injury Lawyer" in names
 
-    def test_parse_local_businesses_ratings(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_ratings(self, google_personal_injury_lawyer_html: str) -> None:
         for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
             assert "rating" in biz.metadata
             assert biz.metadata["rating"]
 
-    def test_parse_local_businesses_reviews(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_reviews(self, google_personal_injury_lawyer_html: str) -> None:
         bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
         marks = next(b for b in bizzes if b.title == "Marks & Harrison")
         assert marks.metadata.get("reviews") == "425"
 
-    def test_parse_local_businesses_category(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_category(self, google_personal_injury_lawyer_html: str) -> None:
         for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
             assert biz.metadata.get("category") == "Personal injury attorney"
 
-    def test_parse_local_businesses_location(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_location(self, google_personal_injury_lawyer_html: str) -> None:
         bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
         marks = next(b for b in bizzes if b.title == "Marks & Harrison")
         assert marks.metadata.get("location") == "Alexandria, VA"
 
-    def test_parse_local_businesses_phone(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_phone(self, google_personal_injury_lawyer_html: str) -> None:
         bizzes = self.parser.parse(google_personal_injury_lawyer_html).local_businesses
         marks = next(b for b in bizzes if b.title == "Marks & Harrison")
         assert marks.metadata.get("phone") == "(703) 884-1863"
 
-    def test_parse_local_businesses_hours(
-        self, google_personal_injury_lawyer_html: str
-    ) -> None:
+    def test_parse_local_businesses_hours(self, google_personal_injury_lawyer_html: str) -> None:
         for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
             assert biz.metadata.get("hours") == "Open 24 hours"
 

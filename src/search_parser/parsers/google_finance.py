@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -159,10 +160,8 @@ def _extract_data_blocks(script_text: str) -> list[tuple[str, Any]]:
         raw = _extract_balanced(script_text, m.end())
         if raw is None:
             continue
-        try:
+        with contextlib.suppress(json.JSONDecodeError):
             results.append((m.group(1), json.loads(raw)))
-        except json.JSONDecodeError:
-            pass
     return results
 
 
@@ -286,12 +285,23 @@ def _parse_chart(data: Any, position: int) -> SearchResult | None:
         return None
 
     points: list[dict[str, object]] = []
-    for period in (chart_raw[3] if len(chart_raw) > 3 and isinstance(chart_raw[3], list) else []):
-        for pt in (period[1] if isinstance(period, list) and len(period) > 1 else []):
-            if not (isinstance(pt, list) and len(pt) >= 2 and isinstance(pt[0], list) and isinstance(pt[1], list)):
+    for period in chart_raw[3] if len(chart_raw) > 3 and isinstance(chart_raw[3], list) else []:
+        for pt in period[1] if isinstance(period, list) and len(period) > 1 else []:
+            if not (
+                isinstance(pt, list)
+                and len(pt) >= 2
+                and isinstance(pt[0], list)
+                and isinstance(pt[1], list)
+            ):
                 continue
             y, m, d = pt[0][0], pt[0][1], pt[0][2]
-            points.append({"date": f"{y}-{m:02d}-{d:02d}", "price": pt[1][0], "volume": pt[2] if len(pt) > 2 else None})
+            points.append(
+                {
+                    "date": f"{y}-{m:02d}-{d:02d}",
+                    "price": pt[1][0],
+                    "volume": pt[2] if len(pt) > 2 else None,
+                }
+            )
 
     if not points:
         return None
@@ -371,6 +381,7 @@ def _find_financial_arrays(data: Any, results: list[dict[str, object]]) -> None:
 
 def _parse_financial_row(row: list[Any]) -> dict[str, object]:
     """Convert a positional financial array into a named dict."""
+
     def _get(idx: int) -> Any:
         return row[idx] if len(row) > idx else None
 
@@ -391,7 +402,9 @@ def _parse_financial_row(row: list[Any]) -> dict[str, object]:
         "revenue_growth_yoy": _get(11),
         "currency": _get(16),
         "period": period_str,
-        "period_type": "annual" if isinstance(period, list) and len(period) > 1 and period[1] == 12 else "quarterly",
+        "period_type": "annual"
+        if isinstance(period, list) and len(period) > 1 and period[1] == 12
+        else "quarterly",
         "pe_ratio": _get(18),
         "total_assets": _get(23),
         "total_liabilities": _get(24),

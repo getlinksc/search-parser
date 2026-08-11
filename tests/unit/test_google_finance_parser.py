@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from search_parser.parsers.google_finance import GoogleFinanceParser
 from search_parser.utils import make_soup
 

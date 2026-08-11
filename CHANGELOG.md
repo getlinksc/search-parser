@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.5] - 2026-08-11
+
+### Fixed
+
+- Desktop organic results returned Google redirect hrefs (`/url?q=https%3A%2F%2F...`) raw instead of the destination URL — `_parse_organic_result` now runs both desktop branches through `_decode_google_redirect`, matching what the mobile path already did
+- `__version__` was pinned at `0.5.3` while `pyproject.toml` shipped `0.5.4`, so `search_parser.__version__` reported the wrong release — both are now bumped together
+
+### Changed
+
+- `_decode_google_redirect` docstring documents that some Google buckets serve `/goto?url=<blob>` hrefs which are encrypted server-side; the destination is not present anywhere in the HTML, so those are returned unchanged for the caller to resolve over the network
+
+### Chore
+
+- Cleared all outstanding `ruff check` errors (unused `json`/`pytest` imports, `try`/`except`/`pass` → `contextlib.suppress`, lambda assignment → `def`) and applied `ruff format` to the four files that were failing `--check`, so the lint workflow passes
+- Cleared the two `mypy` errors in `scrapers/google_finance.py` — the `requests` batchexecute payload list is annotated `list[dict[str, Any]]` so its element type is no longer joined down to `object`
+- Raised the tooling Python target to match `requires-python = ">=3.10"` (mypy `python_version` and ruff `target-version` were both still on 3.9; mypy 1.x rejects `python_version = "3.9"` outright), and dropped the stale `markdownify.*` mypy override
+- Dropped Python 3.9 from the test matrix and the trove classifiers — `requires-python` has been `>=3.10` since 0.5.3, so the 3.9 leg could only ever fail at `uv sync`
+- CI hardening: the coverage badge step is skipped when `GIST_SECRET`/`GIST_ID` are unset and tolerated when the gist API rejects them (a cosmetic badge write to an external gist no longer reds the pipeline); the publish job declares `contents: read` explicitly (declaring any `permissions` key drops the defaults, which breaks `actions/checkout`) and fails fast if the release tag does not match the version in `pyproject.toml`
+
+---
+
 ## [0.5.4] - 2026-06-06
 
 ### Added

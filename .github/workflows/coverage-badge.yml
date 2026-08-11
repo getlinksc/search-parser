@@ -30,7 +30,25 @@ jobs:
           elif [ "$COVERAGE" -ge 70 ]; then echo "COVERAGE_COLOR=yellow" >> $GITHUB_ENV;
           else echo "COVERAGE_COLOR=red" >> $GITHUB_ENV; fi
 
+      # `secrets` is not available to a step-level `if`, so fold the check into env first.
+      - name: Check badge credentials
+        env:
+          GIST_SECRET: ${{ secrets.GIST_SECRET }}
+          GIST_ID: ${{ vars.GIST_ID }}
+        run: |
+          if [ -n "$GIST_SECRET" ] && [ -n "$GIST_ID" ]; then
+            echo "BADGE_CREDS=true" >> $GITHUB_ENV
+          else
+            echo "BADGE_CREDS=false" >> $GITHUB_ENV
+            echo "::warning::GIST_SECRET or GIST_ID is unset - skipping the coverage badge update"
+          fi
+
+      # The badge is cosmetic - it writes to a gist outside this repo. A missing or
+      # expired GIST_SECRET must not take the pipeline red, so the step is skipped
+      # when the credentials are absent and tolerated when the gist api rejects them.
       - name: Create coverage badge
+        if: ${{ env.BADGE_CREDS == 'true' }}
+        continue-on-error: true
         uses: schneegans/dynamic-badges-action@v1.9.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
