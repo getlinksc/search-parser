@@ -68,7 +68,8 @@ pip install search-parser
 ### Structured Google Maps results
 
 `GoogleMapsParser` handles the XSSI-prefixed JSON from Google's non-JavaScript
-`tbm=map` transport. The request builder remains outside this parsing library.
+`tbm=map` transport. The request builder and network access remain outside this
+parsing library.
 
 ```python
 from search_parser import GoogleMapsParser
@@ -76,7 +77,16 @@ from search_parser import GoogleMapsParser
 places = GoogleMapsParser().parse(response_text, query="coffee chicago")
 for place in places.places:
     print(place.name, place.website, place.rating, place.latitude, place.longitude)
+
+# JSON suitable for an API response or fixture
+print(places.to_json())
 ```
+
+The parser accepts XSSI-prefixed or plain JSON, validates the positional place
+record signature, suppresses duplicate Google data IDs, and decodes Google
+website redirects. Invalid JSON and incomplete XSSI responses raise
+`GoogleMapsParseError`. See the [Google Maps guide](docs/google_maps.md) for the
+complete field contract and operational caveats.
 
 ---
 

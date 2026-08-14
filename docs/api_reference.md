@@ -22,9 +22,25 @@ metadata contract is documented in [Google Parsing](google.md).
     options:
       show_root_heading: true
 
+::: search_parser.core.models.GoogleMapsPlace
+    options:
+      show_root_heading: true
+
+::: search_parser.core.models.GoogleMapsResults
+    options:
+      show_root_heading: true
+
 ## Parsers
 
 ::: search_parser.parsers.base.BaseParser
+    options:
+      show_root_heading: true
+
+::: search_parser.parsers.google_maps.GoogleMapsParser
+    options:
+      show_root_heading: true
+
+::: search_parser.parsers.google_maps.GoogleMapsParseError
     options:
       show_root_heading: true
 
