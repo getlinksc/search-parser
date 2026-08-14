@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.8] - 2026-08-14
+
+### Added
+
+- `GoogleMapsParser` for the XSSI-prefixed JSON returned by Google's non-JavaScript
+  `tbm=map` transport
+- Typed `GoogleMapsPlace` and `GoogleMapsResults` models covering place IDs,
+  direct websites, addresses, coordinates, ratings, categories, phones, photos,
+  time zones, and displayed opening hours
+- Positional-schema validation, duplicate suppression, redirect decoding, plain-JSON
+  support, public exports, focused unit tests, and a Google Maps usage guide
+
+---
+
 ## [0.5.7] - 2026-08-14
 
 ### Added

@@ -8,7 +8,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-**Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or Python dict — with automatic search engine detection.**
+**Parse Google, Bing, DuckDuckGo, and Google Maps search results into typed Python objects, JSON, Markdown, or dict output.**
 
 `search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop, mobile, or Google's stripped no-JS layout — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
@@ -63,6 +63,19 @@ uv add search-parser
 
 ```bash
 pip install search-parser
+```
+
+### Structured Google Maps results
+
+`GoogleMapsParser` handles the XSSI-prefixed JSON from Google's non-JavaScript
+`tbm=map` transport. The request builder remains outside this parsing library.
+
+```python
+from search_parser import GoogleMapsParser
+
+places = GoogleMapsParser().parse(response_text, query="coffee chicago")
+for place in places.places:
+    print(place.name, place.website, place.rating, place.latitude, place.longitude)
 ```
 
 ---
