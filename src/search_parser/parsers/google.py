@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import copy
+import json
 import logging
 import re
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
 
@@ -79,6 +80,7 @@ class GoogleParser(BaseParser):
             news=self._extract_news_results(soup),
             local_businesses=self._extract_local_businesses(soup),
             detection_confidence=confidence,
+            metadata=self._extract_page_metadata(soup),
         )
 
     def _find_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
@@ -252,12 +254,15 @@ class GoogleParser(BaseParser):
         if not url or not title:
             return None
 
+        metadata = self._extract_opera_mini_result_metadata(item, h3)
+
         return SearchResult(
             title=title,
             url=url,
             description=self._opera_mini_description(item, h3),
             position=position,
             result_type="organic",
+            metadata=metadata,
         )
 
     @staticmethod
@@ -270,6 +275,27 @@ class GoogleParser(BaseParser):
         for block in item.find_all("div", class_="lQigmf"):
             if not isinstance(block, Tag) or h3 in block.descendants:
                 continue
+
+            # Prefer the leaf snippet node.  Rich result metadata (rating,
+            # reviews, delivery) is rendered in the same lQigmf wrapper and
+            # should not be folded into the description.
+            candidates: list[str] = []
+            for candidate in block.find_all("div", class_="H66NU"):
+                if not isinstance(candidate, Tag) or candidate.find("div"):
+                    continue
+                if candidate.find("a"):
+                    continue
+                if candidate.find(class_="yi40Hd") or candidate.find(class_="RDApEe"):
+                    continue
+                candidate_copy = copy.copy(candidate)
+                for metadata_el in candidate_copy.find_all(class_="UK5aid"):
+                    metadata_el.decompose()
+                text = clean_text(candidate_copy.get_text()).lstrip("· ")
+                if text:
+                    candidates.append(text)
+            if candidates:
+                return max(candidates, key=len)
+
             block = copy.copy(block)
             for anchor in block.find_all("a"):
                 anchor.decompose()
@@ -277,6 +303,81 @@ class GoogleParser(BaseParser):
             if text:
                 return text
         return None
+
+    def _extract_opera_mini_result_metadata(self, item: Tag, h3: Tag) -> dict[str, object]:
+        """Extract rich metadata and sitelinks from an Opera Mini result."""
+        metadata: dict[str, object] = {}
+
+        title_block = h3.find_parent("a")
+        display_el = title_block.find(class_="BamJPe") if isinstance(title_block, Tag) else None
+        if isinstance(display_el, Tag):
+            display_url = clean_text(display_el.get_text())
+            if display_url:
+                metadata["display_url"] = display_url
+
+        rating_el = item.find(class_="yi40Hd")
+        if isinstance(rating_el, Tag):
+            rating = clean_text(rating_el.get_text())
+            if rating:
+                metadata["rating"] = rating
+
+        reviews_el = item.find(class_="RDApEe")
+        if isinstance(reviews_el, Tag):
+            reviews = clean_text(reviews_el.get_text()).strip("()")
+            if reviews:
+                metadata["reviews"] = reviews
+
+        attributes: list[str] = []
+        published_time: str | None = None
+        for attribute_el in item.find_all(class_="UK5aid"):
+            if not isinstance(attribute_el, Tag):
+                continue
+            if attribute_el.find(class_="yi40Hd") or attribute_el.find(class_="RDApEe"):
+                continue
+            text = clean_text(attribute_el.get_text()).strip("· ")
+            if not text or text in attributes:
+                continue
+            if self._looks_like_published_time(text):
+                published_time = published_time or text
+            else:
+                attributes.append(text)
+        if published_time:
+            metadata["published_time"] = published_time
+        if attributes:
+            metadata["attributes"] = attributes
+
+        sitelinks: list[dict[str, str]] = []
+        seen_sitelinks: set[tuple[str, str]] = set()
+        for block in item.find_all("div", class_="lQigmf"):
+            if not isinstance(block, Tag) or h3 in block.descendants:
+                continue
+            for anchor in block.find_all("a", href=True):
+                if not isinstance(anchor, Tag):
+                    continue
+                title = clean_text(anchor.get_text())
+                url = self._decode_google_redirect(str(anchor.get("href", "")))
+                key = (title.casefold(), url)
+                if title and url and key not in seen_sitelinks:
+                    seen_sitelinks.add(key)
+                    sitelinks.append({"title": title, "url": url})
+        if sitelinks:
+            metadata["sitelinks"] = sitelinks
+
+        return metadata
+
+    @staticmethod
+    def _looks_like_published_time(text: str) -> bool:
+        """Return whether a rich-result attribute looks like a publication date."""
+        month = (
+            r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)"
+            r"(?:uary|ruary|ch|il|e|y|ust|tember|ober|ember)?"
+        )
+        return bool(
+            re.search(rf"\b{month}\s+\d{{1,2}},\s+\d{{4}}\b", text, re.I)
+            or re.search(
+                r"\b\d+\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\s+ago\b", text, re.I
+            )
+        )
 
     @staticmethod
     def _decode_google_redirect(href: str) -> str:
@@ -303,7 +404,121 @@ class GoogleParser(BaseParser):
                 result = self._parse_sponsored_ad(ad)
                 if result:
                     results.append(result)
+
+        # Opera Mini / no-JS ads are wrapped in data-text-ad containers and use
+        # the same xpd card shell as other mobile result types.
+        opera_results: list[SearchResult] = []
+        for ad_wrapper in soup.find_all(attrs={"data-text-ad": "1"}):
+            if not isinstance(ad_wrapper, Tag):
+                continue
+            result = self._parse_opera_mini_sponsored_ad(ad_wrapper)
+            if result:
+                opera_results.append(result)
+
+        # Google commonly repeats the same ad above and below the organic
+        # results.  Merge those copies so bottom-only phone/sitelink data is not
+        # lost while callers receive one advertiser result.
+        deduplicated: dict[tuple[str, str], SearchResult] = {}
+        for result in opera_results:
+            display_url = str(result.metadata.get("display_url", ""))
+            key = (result.title.casefold(), display_url.casefold() or result.url)
+            existing = deduplicated.get(key)
+            if existing is None:
+                deduplicated[key] = result
+                continue
+            if not existing.description and result.description:
+                existing.description = result.description
+            self._merge_result_metadata(existing.metadata, result.metadata)
+        results.extend(deduplicated.values())
         return results
+
+    def _parse_opera_mini_sponsored_ad(self, wrapper: Tag) -> SearchResult | None:
+        """Parse one sponsored result from Google's Opera Mini layout."""
+        card = wrapper.find("div", class_="xpd")
+        if not isinstance(card, Tag):
+            card = wrapper
+
+        link = card.find("a", class_="cz3goc")
+        if not isinstance(link, Tag):
+            return None
+        heading = link.find(attrs={"role": "heading"})
+        title = clean_text(heading.get_text()) if isinstance(heading, Tag) else ""
+        url = str(link.get("href", ""))
+        if not title or not url:
+            return None
+
+        description_el = card.find(class_="r025kc")
+        description = (
+            clean_text(description_el.get_text()) if isinstance(description_el, Tag) else None
+        )
+
+        metadata: dict[str, object] = {}
+        display_el = card.find(attrs={"data-dtld": True})
+        if isinstance(display_el, Tag):
+            display_url = clean_text(display_el.get_text()) or str(display_el.get("data-dtld", ""))
+            if display_url:
+                metadata["display_url"] = display_url
+
+        rating_el = card.find(class_="yi40Hd")
+        if isinstance(rating_el, Tag):
+            rating = clean_text(rating_el.get_text())
+            if rating:
+                metadata["rating"] = rating
+
+        phone_link = card.find("a", href=re.compile(r"^tel:"))
+        if isinstance(phone_link, Tag):
+            phone = clean_text(phone_link.get_text()) or str(phone_link.get("href", ""))[4:]
+            phone = re.sub(r"^Call\s+", "", phone, flags=re.I)
+            if phone:
+                metadata["phone"] = phone
+
+        sitelinks: list[dict[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for sitelink_root in card.select(".E8hWLe, .qmaLCb"):
+            for sitelink in sitelink_root.find_all("a", href=True):
+                if not isinstance(sitelink, Tag):
+                    continue
+                sitelink_title = clean_text(sitelink.get_text())
+                sitelink_url = str(sitelink.get("href", ""))
+                key = (sitelink_title.casefold(), sitelink_url)
+                if sitelink_title and sitelink_url and key not in seen:
+                    seen.add(key)
+                    sitelinks.append({"title": sitelink_title, "url": sitelink_url})
+        if sitelinks:
+            metadata["sitelinks"] = sitelinks
+
+        return SearchResult(
+            title=title,
+            url=url,
+            description=description,
+            position=0,
+            result_type="sponsored",
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _merge_result_metadata(target: dict[str, object], source: dict[str, object]) -> None:
+        """Merge metadata from duplicate result cards without dropping list items."""
+        for key, value in source.items():
+            if key not in target:
+                target[key] = value
+                continue
+            target_value = target[key]
+            if not isinstance(target_value, list) or not isinstance(value, list):
+                continue
+            target_list: list[object] = target_value
+            for item in value:
+                duplicate = item in target_list
+                if isinstance(item, dict) and isinstance(item.get("title"), str):
+                    item_title = item["title"].casefold()
+                    duplicate = duplicate or any(
+                        isinstance(existing, dict)
+                        and isinstance(existing.get("title"), str)
+                        and existing["title"].casefold() == item_title
+                        for existing in target_list
+                    )
+                if not duplicate:
+                    target_list.append(item)
 
     def _parse_sponsored_ad(self, ad: Tag) -> SearchResult | None:
         """Parse a single Google sponsored ad container."""
@@ -395,16 +610,99 @@ class GoogleParser(BaseParser):
                 continue
             description = clean_text(content_div.get_text())
             if description:
+                metadata = self._extract_mobile_ai_metadata(soup, xpd)
                 return SearchResult(
                     title="AI Overview",
                     url="",
                     description=description,
                     position=0,
                     result_type="ai_overview",
-                    metadata={"sources": []},
+                    metadata=metadata,
                 )
 
         return None
+
+    def _extract_mobile_ai_metadata(self, soup: BeautifulSoup, container: Tag) -> dict[str, object]:
+        """Extract AI citations and expanded facts, including JS-injected HTML."""
+        roots: list[BeautifulSoup | Tag] = [container]
+        placeholder_ids = {
+            str(element.get("id"))
+            for element in container.find_all(id=True)
+            if str(element.get("id", "")).startswith("accdef_")
+        }
+        roots.extend(self._extract_jsl_dh_fragments(soup, placeholder_ids or None))
+
+        sources: list[dict[str, str]] = []
+        seen_sources: set[tuple[str, str]] = set()
+        details: list[str] = []
+
+        for root in roots:
+            for card in root.select(".pcitem"):
+                link = card.find("a", href=True)
+                title_el = card.find(class_="UFvD1")
+                if not isinstance(link, Tag) or not isinstance(title_el, Tag):
+                    continue
+                title = clean_text(title_el.get_text())
+                url = self._decode_google_redirect(str(link.get("href", "")))
+                source_el = card.find(class_="BamJPe")
+                source = clean_text(source_el.get_text()) if isinstance(source_el, Tag) else ""
+                key = (title.casefold(), url)
+                if not title or not url or key in seen_sources:
+                    continue
+                seen_sources.add(key)
+                citation = {"title": title, "url": url}
+                if source:
+                    citation["source"] = source
+                sources.append(citation)
+
+            details_root = root.find(id="B2Jtyd")
+            if not isinstance(details_root, Tag):
+                continue
+            for detail_el in details_root.find_all("li"):
+                if not isinstance(detail_el, Tag):
+                    continue
+                detail = clean_text(detail_el.get_text())
+                if detail and detail not in details:
+                    details.append(detail)
+
+        metadata: dict[str, object] = {"sources": sources}
+        if details:
+            metadata["details"] = details
+        return metadata
+
+    @staticmethod
+    def _extract_jsl_dh_fragments(
+        soup: BeautifulSoup, allowed_ids: set[str] | None = None
+    ) -> list[BeautifulSoup]:
+        """Decode inert HTML fragments passed to Google's ``window.jsl.dh`` helper."""
+        fragments: list[BeautifulSoup] = []
+        call_pattern = re.compile(
+            r"window\.jsl\.dh\(\s*['\"]([^'\"]+)['\"]\s*,\s*\"((?:\\.|[^\"\\])*)\"",
+            re.S,
+        )
+        for script in soup.find_all("script"):
+            if not isinstance(script, Tag):
+                continue
+            script_text = script.string or script.get_text()
+            if "window.jsl.dh(" not in script_text:
+                continue
+            for match in call_pattern.finditer(script_text):
+                if allowed_ids is not None and match.group(1) not in allowed_ids:
+                    continue
+                encoded = match.group(2)
+                encoded = re.sub(
+                    r"\\x([0-9a-fA-F]{2})",
+                    lambda value: chr(int(value.group(1), 16)),
+                    encoded,
+                )
+                try:
+                    decoded = json.loads(f'"{encoded}"')
+                except json.JSONDecodeError:
+                    logger.debug("Unable to decode Google jsl.dh fragment", exc_info=True)
+                    continue
+                if "<" in decoded:
+                    fragments.append(make_soup(decoded))
+        return fragments
 
     def _extract_shopping_ads(self, soup: BeautifulSoup) -> list[SearchResult]:
         """Extract shopping ad cards (mobile and desktop Google Shopping units)."""
@@ -577,7 +875,84 @@ class GoogleParser(BaseParser):
                         )
                     )
 
+        # Opera Mini: a heading and a stack of HA0EX search links inside an xpd card.
+        seen = {result.title.casefold() for result in results}
+        for header in soup.find_all("div", class_="E3VR9e"):
+            if not isinstance(header, Tag):
+                continue
+            if clean_text(header.get_text()).casefold() != "people also search for":
+                continue
+            container = header.find_parent("div", class_="xpd")
+            if not isinstance(container, Tag):
+                continue
+            for link in container.find_all("a", class_="HA0EX"):
+                if not isinstance(link, Tag):
+                    continue
+                title_el = link.find(class_="hvqeqc")
+                title = clean_text(
+                    title_el.get_text() if isinstance(title_el, Tag) else link.get_text()
+                )
+                url = str(link.get("href", ""))
+                if not title or not url or title.casefold() in seen:
+                    continue
+                seen.add(title.casefold())
+                results.append(
+                    SearchResult(
+                        title=title,
+                        url=url,
+                        description=None,
+                        position=0,
+                        result_type="people_also_search",
+                    )
+                )
+
         return results
+
+    @staticmethod
+    def _extract_page_metadata(soup: BeautifulSoup) -> dict[str, object]:
+        """Extract page-level location and pagination metadata."""
+        metadata: dict[str, object] = {}
+
+        location_el = soup.select_one("#ewlSqd .AhYzQb")
+        if isinstance(location_el, Tag):
+            location = clean_text(location_el.get_text())
+            if location:
+                metadata["location"] = location
+
+        location_container = soup.find(id="ewlSqd")
+        if isinstance(location_container, Tag):
+            for element in location_container.find_all(["span", "div"]):
+                if not isinstance(element, Tag) or element.find(["span", "div"]):
+                    continue
+                text = clean_text(element.get_text())
+                if text.casefold().startswith("from your "):
+                    metadata["location_source"] = text
+                    break
+
+        pagination: dict[str, object] = {}
+        footer = soup.find("footer")
+        if isinstance(footer, Tag):
+            for link in footer.find_all("a", href=True):
+                if not isinstance(link, Tag):
+                    continue
+                label = clean_text(link.get_text()).casefold()
+                aria_label = str(link.get("aria-label", "")).casefold()
+                direction = None
+                if label.startswith("next") or aria_label == "next page":
+                    direction = "next"
+                elif label.startswith("previous") or aria_label == "previous page":
+                    direction = "previous"
+                if direction is None:
+                    continue
+                url = urljoin("https://www.google.com", str(link.get("href", "")))
+                pagination[f"{direction}_url"] = url
+                start = parse_qs(urlparse(url).query).get("start")
+                if start and start[0].isdigit():
+                    pagination[f"{direction}_start"] = int(start[0])
+        if pagination:
+            metadata["pagination"] = pagination
+
+        return metadata
 
     def _extract_related_products(self, soup: BeautifulSoup) -> list[SearchResult]:
         """Extract 'Find Related Products & Services' ad suggestions."""

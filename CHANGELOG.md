@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.7] - 2026-08-14
+
+### Added
+
+- Opera Mini organic rich metadata: `display_url`, `rating`, `reviews`, `attributes`, `published_time`, and decoded `sitelinks` are now preserved in each result's `metadata`
+- Opera Mini text ads from `data-text-ad="1"` cards are parsed into `sponsored`, including display URL, advertiser rating, description, sitelinks, and phone number. Repeated top/bottom copies are merged without losing metadata that appears in only one placement
+- AI Overview citation cards and expanded facts embedded in Google's inert `window.jsl.dh(...)` HTML strings are decoded without executing JavaScript. Citations are returned in `ai_overview.metadata["sources"]`, including source names, and expanded facts in `ai_overview.metadata["details"]`
+- Opera Mini "People also search for" cards are returned through `people_also_search`
+- Page-level location, location source, next/previous page URLs, and result offsets are returned through `SearchResults.metadata`
+- Compact Opera Mini rich-results regression fixture based on a live proxy response, with seven focused tests for the new fields
+
+### Fixed
+
+- Opera Mini organic descriptions no longer include rating, review, delivery, publication-date, or sitelink text rendered beside the actual snippet
+
+---
+
 ## [0.5.6] - 2026-08-14
 
 ### Added
@@ -240,7 +257,10 @@ sponsored = results.sponsored         # list[SearchResult]
 - CI/CD workflows for testing, linting, coverage, and publishing.
 - Pre-commit hooks for ruff and mypy.
 
-[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/getlinksc/search-parser/compare/v0.5.7...HEAD
+[0.5.7]: https://github.com/getlinksc/search-parser/compare/v0.5.6...v0.5.7
+[0.5.6]: https://github.com/getlinksc/search-parser/compare/v0.5.5...v0.5.6
+[0.5.5]: https://github.com/getlinksc/search-parser/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/getlinksc/search-parser/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/getlinksc/search-parser/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/getlinksc/search-parser/compare/v0.5.1...v0.5.2

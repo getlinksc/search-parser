@@ -454,6 +454,86 @@ class TestGoogleParser:
         results = self.parser.parse(google_opera_mini_html)
         assert results.detection_confidence >= 0.8
 
+    # --- opera mini rich result data ---
+
+    def test_parse_opera_mini_rich_organic_metadata(self, google_opera_mini_rich_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_rich_html)
+        assert len(results.results) == 2
+        target = results.results[0]
+        assert target.metadata["display_url"] == "www.targetoptical.com › Category"
+        assert target.metadata["rating"] == "4.8"
+        assert target.metadata["reviews"] == "134"
+        assert target.metadata["attributes"] == ["Free delivery"]
+        assert target.metadata["sitelinks"] == [
+            {"title": "Current offers", "url": "https://www.targetoptical.com/offers"}
+        ]
+
+    def test_parse_opera_mini_description_excludes_rich_metadata(
+        self, google_opera_mini_rich_html: str
+    ) -> None:
+        target = self.parser.parse(google_opera_mini_rich_html).results[0]
+        assert target.description == (
+            "Explore our selection of 2-week contact lenses, also known as biweekly or weekly "
+            "contact lenses."
+        )
+        assert "4.8" not in target.description
+        assert "Free delivery" not in target.description
+
+    def test_parse_opera_mini_published_time(self, google_opera_mini_rich_html: str) -> None:
+        reddit = self.parser.parse(google_opera_mini_rich_html).results[1]
+        assert reddit.metadata["published_time"] == "Feb 26, 2024"
+        assert reddit.description == "I found weekly contacts to be significantly cheaper."
+
+    def test_parse_opera_mini_sponsored_rich_data_is_merged(
+        self, google_opera_mini_rich_html: str
+    ) -> None:
+        ads = self.parser.parse(google_opera_mini_rich_html).sponsored
+        assert len(ads) == 1
+        ad = ads[0]
+        assert ad.title == "Our Biggest Sale of the Year | Next Day Delivery Available"
+        assert ad.description == "Start saving now with our yearly 30% off Summer Sale."
+        assert ad.metadata["display_url"] == "www.1800contacts.com/"
+        assert ad.metadata["rating"] == "4.7"
+        assert ad.metadata["phone"] == "(800) 609-1707"
+        assert len(ad.metadata["sitelinks"]) == 2
+        assert {item["title"] for item in ad.metadata["sitelinks"]} == {
+            "30% Off Contact Lenses",
+            "View Prices, Deals And Offers",
+        }
+
+    def test_parse_opera_mini_ai_overview_injected_details_and_sources(
+        self, google_opera_mini_rich_html: str
+    ) -> None:
+        ai = self.parser.parse(google_opera_mini_rich_html).ai_overview
+        assert ai is not None
+        assert ai.metadata["details"] == [
+            "Replacement Schedule: Discard after 14 days.",
+            "Daily Routine: Clean and store nightly.",
+        ]
+        sources = ai.metadata["sources"]
+        assert len(sources) == 2
+        assert sources[0] == {
+            "title": "Weekly and Bi-Weekly Contact Lenses",
+            "url": "https://www.targetoptical.com/to-us/contact-lenses/2weeks",
+            "source": "Target Optical",
+        }
+
+    def test_parse_opera_mini_people_also_search(self, google_opera_mini_rich_html: str) -> None:
+        related = self.parser.parse(google_opera_mini_rich_html).people_also_search
+        assert [result.title for result in related] == [
+            "Contact lens weekly price",
+            "Weekly contact lenses vs daily",
+        ]
+
+    def test_parse_opera_mini_page_metadata(self, google_opera_mini_rich_html: str) -> None:
+        metadata = self.parser.parse(google_opera_mini_rich_html).metadata
+        assert metadata["location"] == "Washington DC (Hagerstown MD), Virginia"
+        assert metadata["location_source"] == "From your IP address"
+        assert metadata["pagination"] == {
+            "next_url": "https://www.google.com/search?q=contact+lens+weekly&start=10&sa=N",
+            "next_start": 10,
+        }
+
     # --- mobile people_also_ask ---
 
     def test_parse_mobile_people_also_ask(self, google_weekly_contacts_mobile_html: str) -> None:
