@@ -100,6 +100,11 @@ def google_opera_mini_html() -> str:
 
 
 @pytest.fixture()
+def google_opera_mini_rich_html() -> str:
+    return (FIXTURES_DIR / "google" / "opera_mini_rich_results.html").read_text()
+
+
+@pytest.fixture()
 def google_finance_quote_html() -> str:
     return (FIXTURES_DIR / "google_finance" / "quote.html").read_text()
 
