@@ -1,5 +1,9 @@
 # API Reference
 
+`SearchResult.metadata` and `SearchResults.metadata` are intentionally flexible
+maps because search engines expose different rich fields. The complete Google
+metadata contract is documented in [Google Parsing](google.md).
+
 ## SearchParser
 
 ::: search_parser.SearchParser

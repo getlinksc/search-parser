@@ -50,6 +50,12 @@ for result in data["results"]:
     print(f"{result['position']}. {result['title']}")
     print(f"   {result['url']}")
     print(f"   {result['description']}")
+    # Optional Google rich-result fields
+    print("   Display URL:", result["metadata"].get("display_url"))
+    print("   Rating:", result["metadata"].get("rating"))
+    print("   Reviews:", result["metadata"].get("reviews"))
+    for sitelink in result["metadata"].get("sitelinks", []):
+        print("   Sitelink:", sitelink["title"], sitelink["url"])
 
 # Featured snippet (dict or None)
 if data["featured_snippet"]:
@@ -59,7 +65,9 @@ if data["featured_snippet"]:
 if data["ai_overview"]:
     print("AI Overview:", data["ai_overview"]["description"][:200])
     for source in data["ai_overview"]["metadata"]["sources"]:
-        print(f"  Source: {source['title']} — {source['url']}")
+        print(f"  Source: {source.get('source', source['title'])} — {source['url']}")
+    for detail in data["ai_overview"]["metadata"].get("details", []):
+        print("  Detail:", detail)
 
 # People Also Ask (list) — Google only
 for q in data["people_also_ask"]:
@@ -76,6 +84,11 @@ for item in data["people_also_search"]:
 # Sponsored / ads (list)
 for ad in data["sponsored"]:
     print("Ad:", ad["title"], ad["url"])
+    print("  Display URL:", ad["metadata"].get("display_url"))
+    print("  Rating:", ad["metadata"].get("rating"))
+    print("  Phone:", ad["metadata"].get("phone"))
+    for sitelink in ad["metadata"].get("sitelinks", []):
+        print("  Sitelink:", sitelink["title"], sitelink["url"])
 
 # Related Products & Services (list) — Google only
 for product in data["related_products"]:
@@ -117,6 +130,9 @@ for article in data["news"]:
 print(data["query"])           # "python web scraping"
 print(data["total_results"])   # 26200000 or None
 print(data["search_engine"])   # "google"
+print(data["metadata"].get("location"))
+print(data["metadata"].get("location_source"))
+print(data["metadata"].get("pagination", {}).get("next_url"))
 ```
 
 ## Using the Model Directly
@@ -134,12 +150,17 @@ print(results.total_results)
 
 for r in results.results:  # organic only
     print(r.title, r.url)
+    print(r.metadata.get("display_url"), r.metadata.get("rating"))
 
 if results.featured_snippet:
     print(results.featured_snippet.title)
 
 if results.ai_overview:
     print(results.ai_overview.description)
+    print(results.ai_overview.metadata.get("details", []))
+
+for ad in results.sponsored:
+    print(ad.title, ad.metadata.get("display_url"), ad.metadata.get("phone"))
 
 for q in results.people_also_ask:
     print(q.title)
@@ -162,6 +183,10 @@ json_str = results.to_json()  # JSON string, indent=2 by default
 json_str = results.to_json(indent=4)  # custom indent
 md_str = results.to_markdown()  # Markdown string
 ```
+
+Google only emits rich metadata when the corresponding markup exists. See
+[Google Parsing](google.md) for every organic, sponsored, AI Overview, location,
+and pagination field.
 
 ## Specifying the Engine
 

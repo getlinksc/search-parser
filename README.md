@@ -10,7 +10,7 @@
 
 **Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or Python dict — with automatic search engine detection.**
 
-`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop or mobile — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
+`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop, mobile, or Google's Opera Mini no-JS layout — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
 ---
 
@@ -35,6 +35,8 @@ data = parser.parse(html, output_format="dict")
 for result in data["results"]:
     print(f"{result['position']}. {result['title']}")
     print(f"   {result['url']}")
+    # Google rich fields are optional and live under metadata
+    print(f"   {result['metadata'].get('rating', 'no rating')}")
 
 # Every other result type has its own dedicated key
 if data["featured_snippet"]:
@@ -81,6 +83,7 @@ pip install search-parser
 | Discussions and forums | `discussions` | ✓ | — | — |
 | Shopping ads | `shopping_ads` | ✓ | — | — |
 | News tab articles | `news` | ✓ | — | — |
+| Local business pack | `local_businesses` | ✓ | — | — |
 
 ---
 
@@ -94,6 +97,10 @@ data = parser.parse(html, output_format="dict")
 # Always a list (organic results only)
 for r in data["results"]:
     print(r["title"], r["url"], r["description"])
+    print(r["metadata"].get("display_url"))
+    print(r["metadata"].get("rating"), r["metadata"].get("reviews"))
+    for sitelink in r["metadata"].get("sitelinks", []):
+        print("  Sitelink:", sitelink["title"], sitelink["url"])
 
 # None or a single object
 if data["featured_snippet"]:
@@ -104,7 +111,9 @@ if data["ai_overview"]:
     overview = data["ai_overview"]
     print(overview["description"])
     for source in overview["metadata"]["sources"]:
-        print(f"  - {source['title']}: {source['url']}")
+        print(f"  - {source.get('source', source['title'])}: {source['url']}")
+    for detail in overview["metadata"].get("details", []):
+        print(f"  - {detail}")
 
 # Always a list (empty when not present)
 for q in data["people_also_ask"]:
@@ -118,6 +127,9 @@ for item in data["people_also_search"]:
 
 for ad in data["sponsored"]:
     print(ad["title"], ad["url"])
+    print(ad["metadata"].get("display_url"), ad["metadata"].get("phone"))
+    for sitelink in ad["metadata"].get("sitelinks", []):
+        print("  Sitelink:", sitelink["title"])
 
 for product in data["related_products"]:
     print(product["title"])
@@ -145,6 +157,9 @@ print(data["search_engine"])        # "google"
 print(data["query"])                # "python web scraping"
 print(data["total_results"])        # 26200000 or None
 print(data["detection_confidence"]) # 0.95
+print(data["metadata"].get("location"))
+print(data["metadata"].get("location_source"))
+print(data["metadata"].get("pagination", {}).get("next_url"))
 ```
 
 ### Using the model directly
@@ -168,6 +183,14 @@ if results.featured_snippet:
 if results.ai_overview:
     print(results.ai_overview.description)
     sources = results.ai_overview.metadata["sources"]
+    details = results.ai_overview.metadata.get("details", [])
+
+for result in results.results:
+    print(result.metadata.get("display_url"))
+    print(result.metadata.get("rating"), result.metadata.get("reviews"))
+
+for ad in results.sponsored:
+    print(ad.title, ad.metadata.get("display_url"), ad.metadata.get("phone"))
 
 for q in results.people_also_ask:
     print(q.title)
@@ -206,7 +229,13 @@ md_str = results.to_markdown()
       "description": "Learn how to scrape websites with Python...",
       "position": 1,
       "result_type": "organic",
-      "metadata": {}
+      "metadata": {
+        "display_url": "realpython.com › tutorials",
+        "published_time": "Feb 26, 2024",
+        "sitelinks": [
+          {"title": "Python Tutorials", "url": "https://realpython.com/tutorials/python/"}
+        ]
+      }
     }
   ],
   "featured_snippet": null,
@@ -218,15 +247,30 @@ md_str = results.to_markdown()
     "result_type": "ai_overview",
     "metadata": {
       "sources": [
-        {"title": "Beautiful Soup", "url": "https://www.crummy.com/software/BeautifulSoup/"},
-        {"title": "Requests", "url": "https://requests.readthedocs.io/"}
-      ]
+        {"title": "Beautiful Soup", "url": "https://www.crummy.com/software/BeautifulSoup/", "source": "Beautiful Soup"},
+        {"title": "Requests", "url": "https://requests.readthedocs.io/", "source": "Requests"}
+      ],
+      "details": ["HTML parsers turn result markup into a searchable tree."]
     }
   },
   "people_also_ask": [
     {"title": "Is Python good for web scraping?", "url": "", "position": 0, "result_type": "people_also_ask", "metadata": {}}
   ],
-  "sponsored": [],
+  "sponsored": [
+    {
+      "title": "Sponsored result",
+      "url": "http://www.google.com/aclk?...",
+      "description": "An advertiser description.",
+      "position": 0,
+      "result_type": "sponsored",
+      "metadata": {
+        "display_url": "www.example.com/",
+        "rating": "4.7",
+        "phone": "(800) 555-0100",
+        "sitelinks": [{"title": "Current offers", "url": "http://www.google.com/aclk?..."}]
+      }
+    }
+  ],
   "people_saying": [],
   "people_also_search": [],
   "related_products": [],
@@ -271,9 +315,20 @@ md_str = results.to_markdown()
   "news": [],
   "detection_confidence": 0.95,
   "parsed_at": "2026-02-21T00:00:00Z",
-  "metadata": {}
+  "metadata": {
+    "location": "Washington DC (Hagerstown MD), Virginia",
+    "location_source": "From your IP address",
+    "pagination": {
+      "next_url": "https://www.google.com/search?q=python+web+scraping&start=10&sa=N",
+      "next_start": 10
+    }
+  }
 }
 ```
+
+Google only returns rich fields when they are present in the source HTML. See the
+[Google parser reference](https://getlinksc.github.io/search-parser/google/) for the
+complete metadata schema and Opera Mini behavior.
 
 ### Markdown (`output_format="markdown"` or `results.to_markdown()`)
 

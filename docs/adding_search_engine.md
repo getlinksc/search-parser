@@ -57,6 +57,7 @@ class MyEngineParser(BaseParser):
 **Key conventions:**
 
 - `results` must contain **organic results only**. Sponsored ads go in `sponsored`, featured snippets in `featured_snippet`, etc.
+- Preserve optional engine-specific rich fields in `SearchResult.metadata`; preserve page-level values such as location or pagination in `SearchResults.metadata`.
 - Return an empty `SearchResults` (with `results=[]`) on malformed HTML — never raise.
 - Use `clean_text()` from `search_parser.utils` to normalize whitespace.
 
