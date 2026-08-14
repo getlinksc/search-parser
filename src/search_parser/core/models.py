@@ -106,3 +106,47 @@ class SearchResults(BaseModel):
         )
 
         return MarkdownFormatter().format(self)
+
+
+class GoogleMapsPlace(BaseModel):
+    """One place decoded from Google Maps' structured search response."""
+
+    position: int
+    name: str
+    data_id: str
+    place_id: Optional[str] = None  # noqa: UP045
+    google_maps_url: Optional[str] = None  # noqa: UP045
+    website: Optional[str] = None  # noqa: UP045
+    domain: Optional[str] = None  # noqa: UP045
+    address: Optional[str] = None  # noqa: UP045
+    address_lines: list[str] = Field(default_factory=list)
+    district: Optional[str] = None  # noqa: UP045
+    latitude: float
+    longitude: float
+    rating: Optional[float] = None  # noqa: UP045
+    review_count: Optional[int] = None  # noqa: UP045
+    review_url: Optional[str] = None  # noqa: UP045
+    categories: list[str] = Field(default_factory=list)
+    category_ids: list[str] = Field(default_factory=list)
+    phone: Optional[str] = None  # noqa: UP045
+    phone_e164: Optional[str] = None  # noqa: UP045
+    timezone: Optional[str] = None  # noqa: UP045
+    thumbnail: Optional[str] = None  # noqa: UP045
+    opening_hours: dict[str, str] = Field(default_factory=dict)
+
+
+class GoogleMapsResults(BaseModel):
+    """Structured Google Maps places returned for one query."""
+
+    search_engine: Literal["google_maps"] = "google_maps"
+    query: Optional[str] = None  # noqa: UP045
+    places: list[GoogleMapsPlace] = Field(default_factory=list)
+    result_count: int = 0
+    parsed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    metadata: dict[str, object] = Field(default_factory=dict)
+
+    def to_json(self, indent: int = 2) -> str:
+        """Serialize the Maps result set to JSON."""
+        import json  # noqa: PLC0415
+
+        return json.dumps(self.model_dump(mode="json"), indent=indent, ensure_ascii=False)

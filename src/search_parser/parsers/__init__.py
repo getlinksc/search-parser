@@ -5,6 +5,7 @@ from search_parser.parsers.bing import BingParser
 from search_parser.parsers.duckduckgo import DuckDuckGoParser
 from search_parser.parsers.google import GoogleParser
 from search_parser.parsers.google_finance import GoogleFinanceParser
+from search_parser.parsers.google_maps import GoogleMapsParser
 
 # Registry of all available parsers
 PARSER_REGISTRY: dict[str, type[BaseParser]] = {
@@ -20,5 +21,6 @@ __all__ = [
     "DuckDuckGoParser",
     "GoogleParser",
     "GoogleFinanceParser",
+    "GoogleMapsParser",
     "PARSER_REGISTRY",
 ]
