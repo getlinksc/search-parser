@@ -25,6 +25,7 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
+  - Google Parsing: google.md
   - API Reference: api_reference.md
   - Contributing: contributing.md
   - Adding a Search Engine: adding_search_engine.md

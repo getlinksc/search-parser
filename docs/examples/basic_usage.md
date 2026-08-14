@@ -49,6 +49,12 @@ data = parser.parse(html, output_format="dict")
 # Organic results (always a list)
 for r in data["results"]:
     print(f"{r['position']}. {r['title']} — {r['url']}")
+    print("  Display URL:", r["metadata"].get("display_url"))
+    print("  Rating/reviews:", r["metadata"].get("rating"), r["metadata"].get("reviews"))
+    print("  Attributes:", r["metadata"].get("attributes", []))
+    print("  Published:", r["metadata"].get("published_time"))
+    for sitelink in r["metadata"].get("sitelinks", []):
+        print("  Sitelink:", sitelink["title"], sitelink["url"])
 
 # Featured snippet (dict or None)
 if data["featured_snippet"]:
@@ -58,7 +64,9 @@ if data["featured_snippet"]:
 if data["ai_overview"]:
     print(data["ai_overview"]["description"])
     for s in data["ai_overview"]["metadata"]["sources"]:
-        print(f"  {s['title']}: {s['url']}")
+        print(f"  {s.get('source', s['title'])}: {s['url']}")
+    for detail in data["ai_overview"]["metadata"].get("details", []):
+        print("  Detail:", detail)
 
 # People Also Ask (Google only)
 for q in data["people_also_ask"]:
@@ -67,6 +75,10 @@ for q in data["people_also_ask"]:
 # Sponsored ads
 for ad in data["sponsored"]:
     print(ad["title"], ad["url"])
+    print("  Display URL:", ad["metadata"].get("display_url"))
+    print("  Rating/phone:", ad["metadata"].get("rating"), ad["metadata"].get("phone"))
+    for sitelink in ad["metadata"].get("sitelinks", []):
+        print("  Sitelink:", sitelink["title"], sitelink["url"])
 
 # What People Are Saying (Google only)
 for post in data["people_saying"]:
@@ -120,7 +132,14 @@ for biz in data["local_businesses"]:
     print("  Hours:", biz["metadata"].get("hours"))
     if biz["metadata"].get("sponsored"):
         print("  (sponsored)")
+
+# Page-level Google location and pagination
+print("Location:", data["metadata"].get("location"))
+print("Location source:", data["metadata"].get("location_source"))
+print("Next page:", data["metadata"].get("pagination", {}).get("next_url"))
 ```
+
+For the complete optional metadata schema, see [Google Parsing](../google.md).
 
 ## Specifying the Engine
 

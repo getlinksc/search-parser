@@ -4,8 +4,9 @@ Parse search engine HTML results into structured data (JSON, Markdown) with auto
 
 ## Features
 
-- **Auto-detection** of Google, Bing, and DuckDuckGo HTML — desktop and mobile layouts
+- **Auto-detection** of Google, Bing, and DuckDuckGo HTML — desktop, mobile, and Google Opera Mini no-JS layouts
 - **Dedicated fields** for every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more
+- **Rich Google metadata** — ratings, reviews, attributes, publication dates, sitelinks, ad details, AI citations/facts, location, and pagination
 - **Multiple output formats**: JSON, Markdown, Python dict
 - **Convenience methods**: `results.to_json()` and `results.to_markdown()` directly on the model
 - **Extensible** plugin architecture for adding new search engines
@@ -30,6 +31,7 @@ data = parser.parse(html_string, output_format="dict")
 # Organic results
 for result in data["results"]:
     print(result["title"], result["url"])
+    print(result["metadata"].get("display_url"), result["metadata"].get("rating"))
 
 # Dedicated fields — no filtering needed
 if data["featured_snippet"]:
@@ -37,6 +39,7 @@ if data["featured_snippet"]:
 
 if data["ai_overview"]:
     print(data["ai_overview"]["description"])
+    print(data["ai_overview"]["metadata"].get("details", []))
 
 for q in data["people_also_ask"]:
     print(q["title"])
@@ -48,6 +51,10 @@ for ad in data["shopping_ads"]:
 # Local business pack (Google only)
 for biz in data["local_businesses"]:
     print(biz["title"], biz["metadata"].get("rating"), biz["metadata"].get("phone"))
+
+# Page-level Google metadata
+print(data["metadata"].get("location"))
+print(data["metadata"].get("pagination", {}).get("next_url"))
 ```
 
 Or work directly with the typed model and use `to_json()` / `to_markdown()`:
@@ -81,3 +88,7 @@ md_str = results.to_markdown()
 | Discussions and forums | `discussions` | ✓ | — | — |
 | Shopping ads | `shopping_ads` | ✓ | — | — |
 | Local business pack | `local_businesses` | ✓ | — | — |
+| News tab articles | `news` | ✓ | — | — |
+
+See [Google Parsing](google.md) for the optional metadata returned by rich organic
+results, text ads, AI Overviews, and Opera Mini pages.

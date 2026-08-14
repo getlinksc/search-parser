@@ -56,6 +56,12 @@ results = GoogleParser().parse(html)
 
 # Organic results
 print(f"{len(results.results)} organic results")
+for result in results.results:
+    print(result.title, result.metadata.get("display_url"))
+    print(result.metadata.get("rating"), result.metadata.get("reviews"))
+    print(result.metadata.get("attributes", []), result.metadata.get("published_time"))
+    for sitelink in result.metadata.get("sitelinks", []):
+        print(f"  {sitelink['title']}: {sitelink['url']}")
 
 # Featured snippet
 if results.featured_snippet:
@@ -66,7 +72,9 @@ if results.featured_snippet:
 if results.ai_overview:
     print(results.ai_overview.description[:300])
     for source in results.ai_overview.metadata["sources"]:
-        print(f"  {source['title']}: {source['url']}")
+        print(f"  {source.get('source', source['title'])}: {source['url']}")
+    for detail in results.ai_overview.metadata.get("details", []):
+        print(f"  {detail}")
 
 # People Also Ask
 for q in results.people_also_ask:
@@ -75,6 +83,10 @@ for q in results.people_also_ask:
 # Sponsored ads
 for ad in results.sponsored:
     print(ad.title, ad.url)
+    print(ad.metadata.get("display_url"), ad.metadata.get("rating"))
+    print(ad.metadata.get("phone"))
+    for sitelink in ad.metadata.get("sitelinks", []):
+        print(f"  {sitelink['title']}: {sitelink['url']}")
 
 # Social posts
 for post in results.people_saying:
@@ -121,7 +133,17 @@ for biz in results.local_businesses:
     print(f"  {biz.metadata.get('hours')}")
     if biz.metadata.get("sponsored"):
         print("  (sponsored)")
+
+# Page-level Google metadata
+print(results.metadata.get("location"))
+print(results.metadata.get("location_source"))
+pagination = results.metadata.get("pagination", {})
+if isinstance(pagination, dict):
+    print(pagination.get("next_url"), pagination.get("next_start"))
 ```
+
+See [Google Parsing](../google.md) for the complete schema and the differences
+between desktop, standard mobile, and Opera Mini pages.
 
 ## Using to_json() and to_markdown()
 

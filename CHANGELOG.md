@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Opera Mini organic descriptions no longer include rating, review, delivery, publication-date, or sitelink text rendered beside the actual snippet
 
+### Documentation
+
+- Added a complete Google metadata reference and updated the README, site home, getting-started guide, API guidance, parser-author guidance, and basic/advanced examples for rich organic results, sponsored ads, AI citations/details, related searches, location, and pagination
+
 ---
 
 ## [0.5.6] - 2026-08-14

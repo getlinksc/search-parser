@@ -37,6 +37,7 @@ class SearchResult(BaseModel):
         "financial_news",
         "local_business",
     ] = "organic"
+    # Engine- and result-specific rich fields (for example ratings or sitelinks).
     metadata: dict[str, object] = Field(default_factory=dict)
 
 
@@ -77,6 +78,7 @@ class SearchResults(BaseModel):
 
     detection_confidence: float = Field(ge=0.0, le=1.0)
     parsed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # Page-level fields (for example search location or pagination links).
     metadata: dict[str, object] = Field(default_factory=dict)
 
     def to_json(self, indent: int = 2) -> str:
