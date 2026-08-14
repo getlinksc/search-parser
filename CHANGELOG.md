@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.6] - 2026-08-14
+
+### Added
+
+- Google Opera Mini layout support. Google serves Opera Mini's rendering proxy a stripped no-JS page (`client=ms-opera-mini-*`) that reuses the mobile `div.xpd` shell but puts the title in an `h3.zBAuLc` inside the result anchor instead of an `egMi0` block, so `parse()` returned zero organic results for it. `_find_opera_mini_organic_results` and `_parse_opera_mini_organic_result` handle that layout; `_find_organic_results` falls through to it only when the desktop and `egMi0` mobile selectors find nothing
+- `tests/fixtures/google/opera_mini_claude.html` — a real Opera Mini SERP (9 organic results), with tests covering count, positions, redirect decoding, titles, and detection confidence
+
+### Fixed
+
+- Opera Mini snippets no longer swallow sitelink text: sitelinks are nested anchors inside the same `div.lQigmf` description block, so they are dropped from a copy of the tag before the snippet text is collected
+
+---
+
 ## [0.5.5] - 2026-08-11
 
 ### Fixed
