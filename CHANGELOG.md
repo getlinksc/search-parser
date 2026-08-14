@@ -13,16 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Opera Mini organic rich metadata: `display_url`, `rating`, `reviews`, `attributes`, `published_time`, and decoded `sitelinks` are now preserved in each result's `metadata`
-- Opera Mini text ads from `data-text-ad="1"` cards are parsed into `sponsored`, including display URL, advertiser rating, description, sitelinks, and phone number. Repeated top/bottom copies are merged without losing metadata that appears in only one placement
+- No-JS mobile organic rich metadata: `display_url`, `rating`, `reviews`, `attributes`, `published_time`, and decoded `sitelinks` are now preserved in each result's `metadata`
+- No-JS mobile text ads from `data-text-ad="1"` cards are parsed into `sponsored`, including display URL, advertiser rating, description, sitelinks, and phone number. Repeated top/bottom copies are merged without losing metadata that appears in only one placement
 - AI Overview citation cards and expanded facts embedded in Google's inert `window.jsl.dh(...)` HTML strings are decoded without executing JavaScript. Citations are returned in `ai_overview.metadata["sources"]`, including source names, and expanded facts in `ai_overview.metadata["details"]`
-- Opera Mini "People also search for" cards are returned through `people_also_search`
+- No-JS mobile "People also search for" cards are returned through `people_also_search`
 - Page-level location, location source, next/previous page URLs, and result offsets are returned through `SearchResults.metadata`
-- Compact Opera Mini rich-results regression fixture based on a live proxy response, with seven focused tests for the new fields
+- Compact no-JS mobile rich-results regression fixture based on a live proxy response, with seven focused tests for the new fields
 
 ### Fixed
 
-- Opera Mini organic descriptions no longer include rating, review, delivery, publication-date, or sitelink text rendered beside the actual snippet
+- No-JS mobile organic descriptions no longer include rating, review, delivery, publication-date, or sitelink text rendered beside the actual snippet
 
 ### Documentation
 
@@ -34,12 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Google Opera Mini layout support. Google serves Opera Mini's rendering proxy a stripped no-JS page (`client=ms-opera-mini-*`) that reuses the mobile `div.xpd` shell but puts the title in an `h3.zBAuLc` inside the result anchor instead of an `egMi0` block, so `parse()` returned zero organic results for it. `_find_opera_mini_organic_results` and `_parse_opera_mini_organic_result` handle that layout; `_find_organic_results` falls through to it only when the desktop and `egMi0` mobile selectors find nothing
-- `tests/fixtures/google/opera_mini_claude.html` — a real Opera Mini SERP (9 organic results), with tests covering count, positions, redirect decoding, titles, and detection confidence
+- Google no-JS mobile layout support. The stripped page reuses the mobile `div.xpd` shell but puts the title in an `h3.zBAuLc` inside the result anchor instead of an `egMi0` block, so `parse()` returned zero organic results for it. `_find_no_js_mobile_organic_results` and `_parse_no_js_mobile_organic_result` handle that layout; `_find_organic_results` falls through to it only when the desktop and `egMi0` mobile selectors find nothing
+- `tests/fixtures/google/no_js_mobile_claude.html` — a real no-JS mobile SERP (9 organic results), with tests covering count, positions, redirect decoding, titles, and detection confidence
 
 ### Fixed
 
-- Opera Mini snippets no longer swallow sitelink text: sitelinks are nested anchors inside the same `div.lQigmf` description block, so they are dropped from a copy of the tag before the snippet text is collected
+- No-JS mobile snippets no longer swallow sitelink text: sitelinks are nested anchors inside the same `div.lQigmf` description block, so they are dropped from a copy of the tag before the snippet text is collected
 
 ---
 

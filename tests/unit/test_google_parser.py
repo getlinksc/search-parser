@@ -410,54 +410,56 @@ class TestGoogleParser:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert results.detection_confidence >= 0.8
 
-    # --- opera mini organic results ---
+    # --- no-JS mobile organic results ---
 
-    def test_parse_opera_mini_organic_results(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_organic_results(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         assert results.search_engine == "google"
         assert results.query == "claude"
         assert len(results.results) == 9
 
-    def test_parse_opera_mini_result_positions(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_result_positions(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         assert [r.position for r in results.results] == list(range(1, 10))
 
-    def test_parse_opera_mini_urls_are_decoded(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_urls_are_decoded(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         for r in results.results:
             assert r.url.startswith("https://")
             assert "/url?q=" not in r.url
             assert "&sa=U" not in r.url
         assert results.results[0].url == "https://claude.ai/"
 
-    def test_parse_opera_mini_have_titles(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_have_titles(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         titles = [r.title for r in results.results]
         assert "Claude" in titles
         assert "Claude (AI) - Wikipedia" in titles
 
-    def test_parse_opera_mini_descriptions_exclude_sitelinks(
-        self, google_opera_mini_html: str
+    def test_parse_no_js_mobile_descriptions_exclude_sitelinks(
+        self, google_no_js_mobile_html: str
     ) -> None:
-        first = self.parser.parse(google_opera_mini_html).results[0]
+        first = self.parser.parse(google_no_js_mobile_html).results[0]
         assert first.description is not None
         assert first.description.startswith("Claude is a next generation AI assistant")
         # "Claude Code" is a sitelink anchor inside the same description block
         assert "Claude Code" not in first.description
 
-    def test_parse_opera_mini_result_types(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_result_types(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         for r in results.results:
             assert r.result_type == "organic"
 
-    def test_parse_opera_mini_detection_confidence(self, google_opera_mini_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_html)
+    def test_parse_no_js_mobile_detection_confidence(self, google_no_js_mobile_html: str) -> None:
+        results = self.parser.parse(google_no_js_mobile_html)
         assert results.detection_confidence >= 0.8
 
-    # --- opera mini rich result data ---
+    # --- no-JS mobile rich result data ---
 
-    def test_parse_opera_mini_rich_organic_metadata(self, google_opera_mini_rich_html: str) -> None:
-        results = self.parser.parse(google_opera_mini_rich_html)
+    def test_parse_no_js_mobile_rich_organic_metadata(
+        self, google_no_js_mobile_rich_html: str
+    ) -> None:
+        results = self.parser.parse(google_no_js_mobile_rich_html)
         assert len(results.results) == 2
         target = results.results[0]
         assert target.metadata["display_url"] == "www.targetoptical.com › Category"
@@ -468,10 +470,10 @@ class TestGoogleParser:
             {"title": "Current offers", "url": "https://www.targetoptical.com/offers"}
         ]
 
-    def test_parse_opera_mini_description_excludes_rich_metadata(
-        self, google_opera_mini_rich_html: str
+    def test_parse_no_js_mobile_description_excludes_rich_metadata(
+        self, google_no_js_mobile_rich_html: str
     ) -> None:
-        target = self.parser.parse(google_opera_mini_rich_html).results[0]
+        target = self.parser.parse(google_no_js_mobile_rich_html).results[0]
         assert target.description == (
             "Explore our selection of 2-week contact lenses, also known as biweekly or weekly "
             "contact lenses."
@@ -479,15 +481,15 @@ class TestGoogleParser:
         assert "4.8" not in target.description
         assert "Free delivery" not in target.description
 
-    def test_parse_opera_mini_published_time(self, google_opera_mini_rich_html: str) -> None:
-        reddit = self.parser.parse(google_opera_mini_rich_html).results[1]
+    def test_parse_no_js_mobile_published_time(self, google_no_js_mobile_rich_html: str) -> None:
+        reddit = self.parser.parse(google_no_js_mobile_rich_html).results[1]
         assert reddit.metadata["published_time"] == "Feb 26, 2024"
         assert reddit.description == "I found weekly contacts to be significantly cheaper."
 
-    def test_parse_opera_mini_sponsored_rich_data_is_merged(
-        self, google_opera_mini_rich_html: str
+    def test_parse_no_js_mobile_sponsored_rich_data_is_merged(
+        self, google_no_js_mobile_rich_html: str
     ) -> None:
-        ads = self.parser.parse(google_opera_mini_rich_html).sponsored
+        ads = self.parser.parse(google_no_js_mobile_rich_html).sponsored
         assert len(ads) == 1
         ad = ads[0]
         assert ad.title == "Our Biggest Sale of the Year | Next Day Delivery Available"
@@ -501,10 +503,10 @@ class TestGoogleParser:
             "View Prices, Deals And Offers",
         }
 
-    def test_parse_opera_mini_ai_overview_injected_details_and_sources(
-        self, google_opera_mini_rich_html: str
+    def test_parse_no_js_mobile_ai_overview_injected_details_and_sources(
+        self, google_no_js_mobile_rich_html: str
     ) -> None:
-        ai = self.parser.parse(google_opera_mini_rich_html).ai_overview
+        ai = self.parser.parse(google_no_js_mobile_rich_html).ai_overview
         assert ai is not None
         assert ai.metadata["details"] == [
             "Replacement Schedule: Discard after 14 days.",
@@ -518,15 +520,17 @@ class TestGoogleParser:
             "source": "Target Optical",
         }
 
-    def test_parse_opera_mini_people_also_search(self, google_opera_mini_rich_html: str) -> None:
-        related = self.parser.parse(google_opera_mini_rich_html).people_also_search
+    def test_parse_no_js_mobile_people_also_search(
+        self, google_no_js_mobile_rich_html: str
+    ) -> None:
+        related = self.parser.parse(google_no_js_mobile_rich_html).people_also_search
         assert [result.title for result in related] == [
             "Contact lens weekly price",
             "Weekly contact lenses vs daily",
         ]
 
-    def test_parse_opera_mini_page_metadata(self, google_opera_mini_rich_html: str) -> None:
-        metadata = self.parser.parse(google_opera_mini_rich_html).metadata
+    def test_parse_no_js_mobile_page_metadata(self, google_no_js_mobile_rich_html: str) -> None:
+        metadata = self.parser.parse(google_no_js_mobile_rich_html).metadata
         assert metadata["location"] == "Washington DC (Hagerstown MD), Virginia"
         assert metadata["location_source"] == "From your IP address"
         assert metadata["pagination"] == {

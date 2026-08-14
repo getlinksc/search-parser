@@ -108,9 +108,9 @@ class GoogleParser(BaseParser):
         if mobile:
             return mobile
 
-        # Opera Mini / no-JS layout: same div.xpd shell, but the title lives in
+        # No-JS mobile layout: same div.xpd shell, but the title lives in
         # an h3.zBAuLc instead of an egMi0 block.
-        return self._find_opera_mini_organic_results(soup)
+        return self._find_no_js_mobile_organic_results(soup)
 
     def _find_mobile_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
         """Find organic result containers on mobile Google pages (div.xpd with egMi0)."""
@@ -120,8 +120,8 @@ class GoogleParser(BaseParser):
             if isinstance(t, Tag) and t.find(class_="egMi0")
         ]
 
-    def _find_opera_mini_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
-        """Find organic result containers on Opera Mini pages (div.xpd with h3.zBAuLc)."""
+    def _find_no_js_mobile_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
+        """Find organic result containers on no-JS mobile pages (div.xpd with h3.zBAuLc)."""
         return [
             t
             for t in soup.find_all("div", class_="xpd")
@@ -157,9 +157,9 @@ class GoogleParser(BaseParser):
         if item.find(class_="egMi0"):
             return self._parse_mobile_organic_result(item, position)
 
-        # Opera Mini path: title is an h3.zBAuLc wrapped in the result's anchor
+        # No-JS mobile path: title is an h3.zBAuLc wrapped in the result's anchor
         if item.find("h3", class_="zBAuLc"):
-            return self._parse_opera_mini_organic_result(item, position)
+            return self._parse_no_js_mobile_organic_result(item, position)
 
         # Desktop path
         link_container = item.find("div", class_="yuRUbf")
@@ -235,10 +235,10 @@ class GoogleParser(BaseParser):
             result_type="organic",
         )
 
-    def _parse_opera_mini_organic_result(self, item: Tag, position: int) -> SearchResult | None:
-        """Parse one Opera Mini organic result (div.xpd with an h3.zBAuLc title).
+    def _parse_no_js_mobile_organic_result(self, item: Tag, position: int) -> SearchResult | None:
+        """Parse one no-JS mobile organic result (div.xpd with an h3.zBAuLc title).
 
-        Google serves this stripped no-JS layout to Opera Mini's rendering proxy.
+        Google serves this stripped no-JS layout to some mobile clients.
         The title and link share one anchor inside a div.sHTlR block; the snippet
         sits in the sibling div.lQigmf alongside any sitelinks.
         """
@@ -254,19 +254,19 @@ class GoogleParser(BaseParser):
         if not url or not title:
             return None
 
-        metadata = self._extract_opera_mini_result_metadata(item, h3)
+        metadata = self._extract_no_js_mobile_result_metadata(item, h3)
 
         return SearchResult(
             title=title,
             url=url,
-            description=self._opera_mini_description(item, h3),
+            description=self._no_js_mobile_description(item, h3),
             position=position,
             result_type="organic",
             metadata=metadata,
         )
 
     @staticmethod
-    def _opera_mini_description(item: Tag, h3: Tag) -> str | None:
+    def _no_js_mobile_description(item: Tag, h3: Tag) -> str | None:
         """Pull the snippet out of the lQigmf block that doesn't hold the title.
 
         Sitelinks live in that same block as nested anchors, so they are dropped
@@ -304,8 +304,8 @@ class GoogleParser(BaseParser):
                 return text
         return None
 
-    def _extract_opera_mini_result_metadata(self, item: Tag, h3: Tag) -> dict[str, object]:
-        """Extract rich metadata and sitelinks from an Opera Mini result."""
+    def _extract_no_js_mobile_result_metadata(self, item: Tag, h3: Tag) -> dict[str, object]:
+        """Extract rich metadata and sitelinks from a no-JS mobile result."""
         metadata: dict[str, object] = {}
 
         title_block = h3.find_parent("a")
@@ -405,13 +405,13 @@ class GoogleParser(BaseParser):
                 if result:
                     results.append(result)
 
-        # Opera Mini / no-JS ads are wrapped in data-text-ad containers and use
+        # No-JS mobile ads are wrapped in data-text-ad containers and use
         # the same xpd card shell as other mobile result types.
         opera_results: list[SearchResult] = []
         for ad_wrapper in soup.find_all(attrs={"data-text-ad": "1"}):
             if not isinstance(ad_wrapper, Tag):
                 continue
-            result = self._parse_opera_mini_sponsored_ad(ad_wrapper)
+            result = self._parse_no_js_mobile_sponsored_ad(ad_wrapper)
             if result:
                 opera_results.append(result)
 
@@ -432,8 +432,8 @@ class GoogleParser(BaseParser):
         results.extend(deduplicated.values())
         return results
 
-    def _parse_opera_mini_sponsored_ad(self, wrapper: Tag) -> SearchResult | None:
-        """Parse one sponsored result from Google's Opera Mini layout."""
+    def _parse_no_js_mobile_sponsored_ad(self, wrapper: Tag) -> SearchResult | None:
+        """Parse one sponsored result from Google's no-JS mobile layout."""
         card = wrapper.find("div", class_="xpd")
         if not isinstance(card, Tag):
             card = wrapper
@@ -875,7 +875,7 @@ class GoogleParser(BaseParser):
                         )
                     )
 
-        # Opera Mini: a heading and a stack of HA0EX search links inside an xpd card.
+        # No-JS mobile: a heading and a stack of HA0EX search links inside an xpd card.
         seen = {result.title.casefold() for result in results}
         for header in soup.find_all("div", class_="E3VR9e"):
             if not isinstance(header, Tag):
