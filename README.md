@@ -10,7 +10,7 @@
 
 **Parse Google, Bing, and DuckDuckGo HTML search results into JSON, Markdown, or Python dict — with automatic search engine detection.**
 
-`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop, mobile, or Google's Opera Mini no-JS layout — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
+`search-parser` takes raw HTML from Google, Bing, and DuckDuckGo — desktop, mobile, or Google's stripped no-JS layout — and extracts every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more — into clean, typed Python objects. It auto-detects the search engine from the HTML, so you never have to specify which parser to use.
 
 ---
 
@@ -328,7 +328,7 @@ md_str = results.to_markdown()
 
 Google only returns rich fields when they are present in the source HTML. See the
 [Google parser reference](https://getlinksc.github.io/search-parser/google/) for the
-complete metadata schema and Opera Mini behavior.
+complete metadata schema and Google no-JS behavior.
 
 ### Markdown (`output_format="markdown"` or `results.to_markdown()`)
 

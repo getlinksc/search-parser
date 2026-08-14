@@ -95,13 +95,13 @@ def google_iphone_15_review_html() -> str:
 
 
 @pytest.fixture()
-def google_opera_mini_html() -> str:
-    return (FIXTURES_DIR / "google" / "opera_mini_claude.html").read_text()
+def google_no_js_mobile_html() -> str:
+    return (FIXTURES_DIR / "google" / "no_js_mobile_claude.html").read_text()
 
 
 @pytest.fixture()
-def google_opera_mini_rich_html() -> str:
-    return (FIXTURES_DIR / "google" / "opera_mini_rich_results.html").read_text()
+def google_no_js_mobile_rich_html() -> str:
+    return (FIXTURES_DIR / "google" / "no_js_mobile_rich_results.html").read_text()
 
 
 @pytest.fixture()

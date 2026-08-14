@@ -143,7 +143,7 @@ if isinstance(pagination, dict):
 ```
 
 See [Google Parsing](../google.md) for the complete schema and the differences
-between desktop, standard mobile, and Opera Mini pages.
+between desktop, standard mobile, and no-JS mobile pages.
 
 ## Using to_json() and to_markdown()
 

@@ -1,14 +1,14 @@
 # Google Parsing
 
-The Google parser supports desktop results, standard mobile results, and the
-stripped no-JavaScript layout Google serves to Opera Mini rendering proxies.
+The Google parser supports desktop results, standard mobile results, and a
+stripped no-JavaScript mobile layout.
 Every layout uses the same `SearchResults` and `SearchResult` models. Fields that
 are not present in the HTML are omitted from `metadata` rather than filled with
 placeholder values.
 
 ## Organic result metadata
 
-Opera Mini rich organic cards can provide these optional `SearchResult.metadata`
+No-JS mobile rich organic cards can provide these optional `SearchResult.metadata`
 keys:
 
 | Key | Type | Meaning |
@@ -41,7 +41,7 @@ description contains only the result snippet.
 
 ## Sponsored results
 
-Opera Mini text ads are returned in `SearchResults.sponsored`. Their optional
+No-JS mobile text ads are returned in `SearchResults.sponsored`. Their optional
 metadata includes `display_url`, `rating`, `phone`, and `sitelinks`. Google often
 renders the same advertiser above and below the organic results. Those copies are
 merged by advertiser, including metadata such as a phone number that occurs only
@@ -56,7 +56,7 @@ for ad in results.sponsored:
         print(sitelink["title"], sitelink["url"])
 ```
 
-An Opera Mini ad's `url` and sitelink URLs may remain Google `aclk` tracking URLs
+A no-JS mobile ad's `url` and sitelink URLs may remain Google `aclk` tracking URLs
 when the destination URL is not included in the page markup.
 
 ## AI Overview metadata
@@ -79,13 +79,13 @@ if overview:
         print(detail)
 ```
 
-In Opera Mini pages, Google sometimes stores citation cards and expanded facts as
+In no-JS mobile pages, Google sometimes stores citation cards and expanded facts as
 escaped HTML passed to `window.jsl.dh(...)`. The parser decodes that inert string
 as HTML; it never executes the JavaScript.
 
 ## Related searches
 
-Opera Mini "People also search for" links are returned in
+No-JS mobile "People also search for" links are returned in
 `SearchResults.people_also_search`, consistent with desktop and standard mobile
 layouts:
 
