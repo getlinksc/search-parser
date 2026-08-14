@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Expanded the Google Maps guide with the complete typed field contract,
+  serialization, detection/error behavior, and monitoring guidance
+
 ---
 
 ## [0.5.8] - 2026-08-14

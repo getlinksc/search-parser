@@ -5,6 +5,7 @@ Parse search engine HTML results into structured data (JSON, Markdown) with auto
 ## Features
 
 - **Auto-detection** of Google, Bing, and DuckDuckGo HTML — desktop, mobile, and Google no-JS layouts
+- **Structured Google Maps parsing** for XSSI-prefixed `tbm=map` place responses
 - **Dedicated fields** for every result type — organic results, featured snippets, AI Overviews, People Also Ask, sponsored ads, shopping ads, and more
 - **Rich Google metadata** — ratings, reviews, attributes, publication dates, sitelinks, ad details, AI citations/facts, location, and pagination
 - **Multiple output formats**: JSON, Markdown, Python dict
