@@ -410,6 +410,50 @@ class TestGoogleParser:
         results = self.parser.parse(google_weekly_contacts_mobile_html)
         assert results.detection_confidence >= 0.8
 
+    # --- opera mini organic results ---
+
+    def test_parse_opera_mini_organic_results(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        assert results.search_engine == "google"
+        assert results.query == "claude"
+        assert len(results.results) == 9
+
+    def test_parse_opera_mini_result_positions(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        assert [r.position for r in results.results] == list(range(1, 10))
+
+    def test_parse_opera_mini_urls_are_decoded(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        for r in results.results:
+            assert r.url.startswith("https://")
+            assert "/url?q=" not in r.url
+            assert "&sa=U" not in r.url
+        assert results.results[0].url == "https://claude.ai/"
+
+    def test_parse_opera_mini_have_titles(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        titles = [r.title for r in results.results]
+        assert "Claude" in titles
+        assert "Claude (AI) - Wikipedia" in titles
+
+    def test_parse_opera_mini_descriptions_exclude_sitelinks(
+        self, google_opera_mini_html: str
+    ) -> None:
+        first = self.parser.parse(google_opera_mini_html).results[0]
+        assert first.description is not None
+        assert first.description.startswith("Claude is a next generation AI assistant")
+        # "Claude Code" is a sitelink anchor inside the same description block
+        assert "Claude Code" not in first.description
+
+    def test_parse_opera_mini_result_types(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        for r in results.results:
+            assert r.result_type == "organic"
+
+    def test_parse_opera_mini_detection_confidence(self, google_opera_mini_html: str) -> None:
+        results = self.parser.parse(google_opera_mini_html)
+        assert results.detection_confidence >= 0.8
+
     # --- mobile people_also_ask ---
 
     def test_parse_mobile_people_also_ask(self, google_weekly_contacts_mobile_html: str) -> None:

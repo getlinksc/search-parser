@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import logging
 import re
 from urllib.parse import unquote
@@ -101,7 +102,13 @@ class GoogleParser(BaseParser):
             return g_divs
 
         # Mobile Google pages use div.xpd containers with egMi0 for organic results
-        return self._find_mobile_organic_results(soup)
+        mobile = self._find_mobile_organic_results(soup)
+        if mobile:
+            return mobile
+
+        # Opera Mini / no-JS layout: same div.xpd shell, but the title lives in
+        # an h3.zBAuLc instead of an egMi0 block.
+        return self._find_opera_mini_organic_results(soup)
 
     def _find_mobile_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
         """Find organic result containers on mobile Google pages (div.xpd with egMi0)."""
@@ -109,6 +116,14 @@ class GoogleParser(BaseParser):
             t
             for t in soup.find_all("div", class_="xpd")
             if isinstance(t, Tag) and t.find(class_="egMi0")
+        ]
+
+    def _find_opera_mini_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
+        """Find organic result containers on Opera Mini pages (div.xpd with h3.zBAuLc)."""
+        return [
+            t
+            for t in soup.find_all("div", class_="xpd")
+            if isinstance(t, Tag) and t.find("h3", class_="zBAuLc")
         ]
 
     def _find_results_by_title_links(self, root: Tag) -> list[Tag]:
@@ -139,6 +154,10 @@ class GoogleParser(BaseParser):
         # Mobile path: containers have egMi0 class
         if item.find(class_="egMi0"):
             return self._parse_mobile_organic_result(item, position)
+
+        # Opera Mini path: title is an h3.zBAuLc wrapped in the result's anchor
+        if item.find("h3", class_="zBAuLc"):
+            return self._parse_opera_mini_organic_result(item, position)
 
         # Desktop path
         link_container = item.find("div", class_="yuRUbf")
@@ -213,6 +232,51 @@ class GoogleParser(BaseParser):
             position=position,
             result_type="organic",
         )
+
+    def _parse_opera_mini_organic_result(self, item: Tag, position: int) -> SearchResult | None:
+        """Parse one Opera Mini organic result (div.xpd with an h3.zBAuLc title).
+
+        Google serves this stripped no-JS layout to Opera Mini's rendering proxy.
+        The title and link share one anchor inside a div.sHTlR block; the snippet
+        sits in the sibling div.lQigmf alongside any sitelinks.
+        """
+        h3 = item.find("h3", class_="zBAuLc")
+        if not isinstance(h3, Tag):
+            return None
+        title = clean_text(h3.get_text())
+
+        link = h3.find_parent("a")
+        if not isinstance(link, Tag):
+            return None
+        url = self._decode_google_redirect(str(link.get("href", "")))
+        if not url or not title:
+            return None
+
+        return SearchResult(
+            title=title,
+            url=url,
+            description=self._opera_mini_description(item, h3),
+            position=position,
+            result_type="organic",
+        )
+
+    @staticmethod
+    def _opera_mini_description(item: Tag, h3: Tag) -> str | None:
+        """Pull the snippet out of the lQigmf block that doesn't hold the title.
+
+        Sitelinks live in that same block as nested anchors, so they are dropped
+        from a copy of the tag before the text is collected.
+        """
+        for block in item.find_all("div", class_="lQigmf"):
+            if not isinstance(block, Tag) or h3 in block.descendants:
+                continue
+            block = copy.copy(block)
+            for anchor in block.find_all("a"):
+                anchor.decompose()
+            text = clean_text(block.get_text())
+            if text:
+                return text
+        return None
 
     @staticmethod
     def _decode_google_redirect(href: str) -> str:
