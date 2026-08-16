@@ -96,6 +96,11 @@ class SearchEngineDetector:
             if "duckduckgo" in content:
                 return DetectionResult(engine="duckduckgo", confidence=0.95)
 
+        # eBay: <meta property="og:site_name" content="eBay">
+        og_site = soup.find("meta", attrs={"property": "og:site_name"})
+        if isinstance(og_site, Tag) and str(og_site.get("content", "")).lower() == "ebay":
+            return DetectionResult(engine="ebay", confidence=0.95)
+
         return None
 
     def _check_dom_structure(self, soup: BeautifulSoup) -> DetectionResult | None:
@@ -114,6 +119,12 @@ class SearchEngineDetector:
         if soup.find_all("div", class_="result"):
             return DetectionResult(engine="duckduckgo", confidence=0.6)
 
+        # eBay: srp-results listing container (s-card is current, s-item is legacy)
+        if soup.find("ul", class_="srp-results"):
+            return DetectionResult(engine="ebay", confidence=0.85)
+        if soup.find_all("li", class_="s-card") or soup.find_all("li", class_="s-item"):
+            return DetectionResult(engine="ebay", confidence=0.8)
+
         return None
 
     # Allowed hostnames for each engine (exact match or subdomain of these)
@@ -121,6 +132,7 @@ class SearchEngineDetector:
         "google": ["google.com", "gstatic.com"],
         "bing": ["bing.com"],
         "duckduckgo": ["duckduckgo.com"],
+        "ebay": ["ebay.com", "ebayimg.com"],
     }
 
     @staticmethod
