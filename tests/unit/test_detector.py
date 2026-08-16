@@ -45,6 +45,18 @@ class TestSearchEngineDetector:
         assert result is not None
         assert result.engine == "duckduckgo"
 
+    def test_detect_ebay_meta_tag(self, ebay_search_slipknot_html: str) -> None:
+        result = self.detector.detect(ebay_search_slipknot_html)
+        assert result is not None
+        assert result.engine == "ebay"
+        assert result.confidence >= 0.9
+
+    def test_detect_ebay_dom_structure(self) -> None:
+        html = '<html><body><ul class="srp-results"><li class="s-card"></li></ul></body></html>'
+        result = self.detector.detect(html)
+        assert result is not None
+        assert result.engine == "ebay"
+
     def test_detect_returns_none_for_unknown(self) -> None:
         html = "<html><body><p>Just a paragraph</p></body></html>"
         result = self.detector.detect(html)

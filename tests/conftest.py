@@ -112,3 +112,8 @@ def google_finance_quote_html() -> str:
 @pytest.fixture()
 def google_finance_crypto_html() -> str:
     return (FIXTURES_DIR / "google_finance" / "crypto.html").read_text()
+
+
+@pytest.fixture()
+def ebay_search_slipknot_html() -> str:
+    return (FIXTURES_DIR / "ebay" / "search_slipknot.html").read_text()
