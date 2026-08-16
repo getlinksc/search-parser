@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.9] - 2026-08-15
+
+### Added
+
+- `EbayParser` for eBay's server-rendered search results pages (current
+  `srp-results` / `s-card` listing markup)
+- Typed extraction of title, url, price, was-price, condition, new-listing
+  flag, time left, image, seller, seller feedback score, and generic listing
+  attributes for each result, plus total result count
+- House-ad placeholder cards (e.g. "Shop on eBay") are filtered out of results
+- eBay detection (`og:site_name`, DOM structure, hostname) wired into
+  `SearchEngineDetector` and `PARSER_REGISTRY`
+- Focused unit tests and a real captured fixture (`ebay/search_slipknot.html`)
+
 ### Documentation
 
 - Expanded the Google Maps guide with the complete typed field contract,
