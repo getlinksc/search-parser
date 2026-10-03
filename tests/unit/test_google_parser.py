@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from search_parser.parsers.google import GoogleParser
 from search_parser.utils import make_soup
 
@@ -429,6 +431,32 @@ class TestGoogleParser:
             assert "/url?q=" not in r.url
             assert "&sa=U" not in r.url
         assert results.results[0].url == "https://claude.ai/"
+
+    @pytest.mark.parametrize(
+        "prefix",
+        ["/url?opi=89978449&q=", "https://www.google.com/url?opi=89978449&q="],
+    )
+    def test_parse_no_js_mobile_urls_decoded_when_q_not_first(
+        self, google_no_js_mobile_html: str, prefix: str
+    ) -> None:
+        expected = [r.url for r in self.parser.parse(google_no_js_mobile_html).results]
+        html = google_no_js_mobile_html.replace('href="/url?q=', f'href="{prefix}')
+        assert [r.url for r in self.parser.parse(html).results] == expected
+
+    @pytest.mark.parametrize(
+        ("href", "expected"),
+        [
+            ("/url?q=https://a.com/&sa=U", "https://a.com/"),
+            ("/url?opi=89978449&q=https%3A%2F%2Fa.com%2Fx&sa=U", "https://a.com/x"),
+            ("https://www.google.com/url?opi=89978449&q=https://a.com/&sa=U", "https://a.com/"),
+            ("/url?sa=t&source=web&url=https://a.com/&ved=x", "https://a.com/"),
+            ("/goto?url=CAESUgHrOzAV", "/goto?url=CAESUgHrOzAV"),
+            ("https://a.com/?q=1", "https://a.com/?q=1"),
+            ("", ""),
+        ],
+    )
+    def test_decode_google_redirect(self, href: str, expected: str) -> None:
+        assert GoogleParser._decode_google_redirect(href) == expected
 
     def test_parse_no_js_mobile_have_titles(self, google_no_js_mobile_html: str) -> None:
         results = self.parser.parse(google_no_js_mobile_html)

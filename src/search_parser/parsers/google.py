@@ -389,9 +389,12 @@ class GoogleParser(BaseParser):
         """
         if not href:
             return href
-        m = re.search(r"/url\?q=([^&]+)", href)
-        if m:
-            return unquote(m.group(1))
+        # The destination is not always the first parameter: Google also
+        # serves ``/url?opi=89978449&q=...`` and ``/url?sa=t&...&url=...``.
+        for param in ("q", "url"):
+            m = re.search(rf"/url\?(?:[^#]*?&)?{param}=([^&]+)", href)
+            if m:
+                return unquote(m.group(1))
         return href
 
     def _extract_sponsored_results(self, soup: BeautifulSoup) -> list[SearchResult]:
