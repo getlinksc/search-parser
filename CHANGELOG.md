@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.10] - 2026-10-03
+
+### Fixed
+
+- Google organic URLs are decoded again when the destination is not the first
+  redirect parameter. Google now serves `/url?opi=89978449&q=<dest>` (relative
+  and absolute), which the decoder missed, so the raw `google.com/url?...`
+  redirect was returned as the result URL. `q` is matched anywhere in the
+  `/url` query string, with `url` as a fallback
+
+---
+
 ## [0.5.9] - 2026-08-15
 
 ### Added
