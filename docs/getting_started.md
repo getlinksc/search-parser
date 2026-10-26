@@ -88,7 +88,7 @@ for ad in data["sponsored"]:
     print("  Rating:", ad["metadata"].get("rating"))
     print("  Phone:", ad["metadata"].get("phone"))
     for sitelink in ad["metadata"].get("sitelinks", []):
-        print("  Sitelink:", sitelink["title"], sitelink["url"])
+        print("  Sitelink:", sitelink["title"], sitelink["tracking_url"])
 
 # Related Products & Services (list) — Google only
 for product in data["related_products"]:

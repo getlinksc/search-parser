@@ -53,11 +53,14 @@ for ad in results.sponsored:
     print(ad.metadata.get("display_url"))
     print(ad.metadata.get("rating"), ad.metadata.get("phone"))
     for sitelink in ad.metadata.get("sitelinks", []):
-        print(sitelink["title"], sitelink["url"])
+        print(sitelink["title"], sitelink["tracking_url"])
 ```
 
-A no-JS mobile ad's `url` and sitelink URLs may remain Google `aclk` tracking URLs
-when the destination URL is not included in the page markup.
+No-JS mobile ad markup does not include the destination URL. An ad's `url` is the
+advertiser's site built from its display URL (for example `https://www.example.com/`),
+the Google `aclk` click URL is kept in `metadata["tracking_url"]`, and the advertiser
+domain is in `metadata["domain"]`. Sitelinks carry `title` and `tracking_url`; their `url` is `None`.
+Fetching a `tracking_url` registers an ad click.
 
 ## AI Overview metadata
 
@@ -66,15 +69,27 @@ The visible summary is in `description`. Metadata contains:
 
 | Key | Type | Meaning |
 |---|---|---|
-| `sources` | `list[dict]` | Citations with `title`, decoded `url`, and optional `source` name |
-| `details` | `list[str]` | Expanded facts that Google initially keeps outside the visible summary |
+| `present` | `bool` | Always `True` when an overview was found |
+| `layout` | `str` | `"chrome"` (JavaScript layout) or `"opera"` (no-JS mobile layout) |
+| `text` | `str` | The full overview text, including text behind "Show more" when the page contains it |
+| `truncated` | `bool` | Google collapsed the overview behind "Show more" |
+| `sources` | `list[dict]` | Cited sources in overview order, see below |
+| `citations` | `list[dict]` | `{"sentence", "source_positions"}` pairs linking sentences to `sources[].position`. Chrome layout only; empty for no-JS pages |
+| `details` | `list[str]` | Expanded facts that Google initially keeps outside the visible summary (no-JS pages) |
+
+Each source has `position` (1-based order in the overview), `title`, `url`, `domain`
+and optional `source` (site name). Chrome-layout sources may also carry `snippet` and
+`redirect` (the original Google redirect). No-JS pages often link sources through
+encrypted Google redirects (`/url?q=CAES...`); the `url` is then that redirect,
+`domain` is `None`, and the caller must resolve the redirect. No-JS titles shortened
+by Google are flagged with `title_truncated`.
 
 ```python
 overview = results.ai_overview
 if overview:
-    print(overview.description)
+    print(overview.metadata["text"])
     for source in overview.metadata.get("sources", []):
-        print(source.get("source", source["title"]), source["url"])
+        print(source["position"], source.get("source", source["title"]), source["url"])
     for detail in overview.metadata.get("details", []):
         print(detail)
 ```

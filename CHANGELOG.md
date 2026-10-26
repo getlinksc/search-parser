@@ -11,11 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.13] - 2026-10-26
 
+### Added
+
+- AI Overview metadata now carries `present`, `layout` (`chrome` or `opera`), the full `text`, and
+  `truncated` (collapsed behind "Show more"). Each source has a 1-based `position` and a `domain`.
+  On the JavaScript (Chrome) layout, the overview is read from its full payload, so sources carry their
+  real URL, full title, site name and snippet, and `citations` links each sentence to `source_positions`
+
+### Changed
+
+- No-JS mobile ads: `url` is now the advertiser's site built from the display URL instead of the Google
+  `aclk` click URL. The click URL moved to `metadata["tracking_url"]` and the advertiser domain is in
+  `metadata["domain"]`. Ad sitelinks keep the click URL in `tracking_url`; their `url` is now `None`
+- Results that had `position` 0 (sponsored, People also ask, People also search, related products, jobs,
+  discussions, shopping ads, news, local results and others) are numbered 1..n in page order
+
 ### Fixed
 
 - Google redirects whose destination is an encrypted `CAES` token (`/url?opi=...&q=CAES...&uoh=3`)
   are no longer unwrapped to the bare token. The href is returned unchanged, like `/goto?url=CAES...`,
   so the caller can resolve it. This showed up as gibberish `url` values in AI Overview sources
+- No-JS AI Overview source titles and site names no longer contain escaped HTML such as `<b>` or `&amp;`
+- Relative no-JS organic sitelinks (`/search?...`) are returned as absolute `https://www.google.com/...` URLs,
+  without the requester's session parameters (`client=`, `channel=`, `sca_esv`, `sxsrf`, `ved`)
+- People also search links are reduced to `https://www.google.com/search?q=...` and no longer leak
+  request parameters such as `client=` or `channel=`
+- Google-internal links (google.* hosts, `/search`, `/imgres`, `/maps`, `/shopping`) are no longer
+  returned as organic results
 
 ---
 

@@ -122,7 +122,7 @@ class TestGoogleParser:
         assert len(results.sponsored) == 6
         assert results.sponsored[0].title == "Employee Scheduling Software"
         assert results.sponsored[0].url.startswith("https://www.inovalon.com/")
-        assert results.sponsored[0].position == 0
+        assert results.sponsored[0].position == 1
         assert results.sponsored[0].result_type == "sponsored"
 
     def test_parse_sponsored_all_have_descriptions(self, google_scheduling_app_html: str) -> None:
@@ -298,9 +298,9 @@ class TestGoogleParser:
         assert "Sr. Manager, Supply Chain" in titles
 
     def test_parse_jobs_have_company_and_location(self, google_supply_chain_jobs_html: str) -> None:
-        for job in self.parser.parse(google_supply_chain_jobs_html).jobs:
+        for i, job in enumerate(self.parser.parse(google_supply_chain_jobs_html).jobs, start=1):
             assert job.result_type == "job"
-            assert job.position == 0
+            assert job.position == i
             assert "company" in job.metadata
             assert "location" in job.metadata
             assert job.metadata["company"]
@@ -545,8 +545,11 @@ class TestGoogleParser:
         sources = ai.metadata["sources"]
         assert len(sources) == 2
         assert sources[0] == {
+            "position": 1,
             "title": "Weekly and Bi-Weekly Contact Lenses",
             "url": "https://www.targetoptical.com/to-us/contact-lenses/2weeks",
+            "domain": "targetoptical.com",
+            "title_truncated": False,
             "source": "Target Optical",
         }
 
@@ -631,9 +634,11 @@ class TestGoogleParser:
     def test_parse_shopping_ads_have_price_and_merchant(
         self, google_weekly_contacts_mobile_html: str
     ) -> None:
-        for ad in self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads:
+        for i, ad in enumerate(
+            self.parser.parse(google_weekly_contacts_mobile_html).shopping_ads, start=1
+        ):
             assert ad.result_type == "shopping_ad"
-            assert ad.position == 0
+            assert ad.position == i
             assert "price" in ad.metadata
             assert "merchant" in ad.metadata
             assert ad.metadata["price"]
@@ -816,9 +821,11 @@ class TestGoogleParser:
     def test_parse_local_businesses_result_type(
         self, google_personal_injury_lawyer_html: str
     ) -> None:
-        for biz in self.parser.parse(google_personal_injury_lawyer_html).local_businesses:
+        for i, biz in enumerate(
+            self.parser.parse(google_personal_injury_lawyer_html).local_businesses, start=1
+        ):
             assert biz.result_type == "local_business"
-            assert biz.position == 0
+            assert biz.position == i
 
     def test_parse_local_businesses_names(self, google_personal_injury_lawyer_html: str) -> None:
         names = [

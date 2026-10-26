@@ -6,9 +6,11 @@ import copy
 import json
 import logging
 import re
-from urllib.parse import parse_qs, unquote, urljoin, urlparse
+from html import unescape as html_unescape
+from typing import Any
+from urllib.parse import parse_qs, parse_qsl, unquote, urlencode, urljoin, urlparse
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Comment, NavigableString, Tag
 
 from search_parser.core.models import SearchResult, SearchResults
 from search_parser.parsers.base import BaseParser
@@ -16,6 +18,9 @@ from search_parser.parsers.google_extras import GoogleExtrasMixin
 from search_parser.utils import clean_text, make_soup
 
 logger = logging.getLogger(__name__)
+
+# Parameters that define a Google search link; the rest are the requester's session state.
+_SEARCH_LINK_PARAMS = frozenset({"q", "tbm", "udm", "tbs", "start", "hl", "gl"})
 
 
 class GoogleParser(GoogleExtrasMixin, BaseParser):
@@ -55,7 +60,7 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         organic: list[SearchResult] = []
         for item in self._find_organic_results(soup):
             result = self._parse_organic_result(item, position)
-            if result:
+            if result and not self._is_google_internal(result.url):
                 organic.append(result)
                 position += 1
 
@@ -68,21 +73,45 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             query=query,
             results=organic,
             total_results=total_results,
-            sponsored=self._extract_sponsored_results(soup),
+            sponsored=self._numbered(self._extract_sponsored_results(soup)),
             featured_snippet=self._extract_featured_snippet(soup),
             ai_overview=self._extract_ai_overview(soup),
-            people_also_ask=self._extract_people_also_ask(soup),
-            people_saying=self._extract_people_saying(soup),
-            people_also_search=self._extract_people_also_search(soup),
-            related_products=self._extract_related_products(soup),
-            jobs=self._extract_jobs(soup),
-            discussions=self._extract_discussions(soup),
-            shopping_ads=self._extract_shopping_ads(soup),
-            news=self._extract_news_results(soup),
-            local_businesses=self._extract_local_businesses(soup),
+            people_also_ask=self._numbered(self._extract_people_also_ask(soup)),
+            people_saying=self._numbered(self._extract_people_saying(soup)),
+            people_also_search=self._numbered(
+                [self._clean_search_link(r) for r in self._extract_people_also_search(soup)]
+            ),
+            related_products=self._numbered(self._extract_related_products(soup)),
+            jobs=self._numbered(self._extract_jobs(soup)),
+            discussions=self._numbered(self._extract_discussions(soup)),
+            shopping_ads=self._numbered(self._extract_shopping_ads(soup)),
+            news=self._numbered(self._extract_news_results(soup)),
+            local_businesses=self._numbered(self._extract_local_businesses(soup)),
             detection_confidence=confidence,
             metadata=self._parse_metadata(soup, html),
         )
+
+    @staticmethod
+    def _numbered(results: list[SearchResult]) -> list[SearchResult]:
+        """Give the items of one block their 1-based order on the page (extractors leave 0)."""
+        for i, result in enumerate(results, start=1):
+            if not result.position:
+                result.position = i
+        return results
+
+    @staticmethod
+    def _clean_search_link(result: SearchResult) -> SearchResult:
+        """Reduce a related-search link to ``https://www.google.com/search?q=...``.
+
+        Google's own link carries session parameters (``sxsrf``, ``ved``, the requesting
+        client's ``client=``/``channel=``) that are meaningless to callers.
+        """
+        parsed = urlparse(result.url)
+        if parsed.path == "/search" and (not parsed.netloc or "google." in parsed.netloc):
+            q = parse_qs(parsed.query).get("q")
+            if q:
+                result.url = "https://www.google.com/search?" + urlencode({"q": q[0]})
+        return result
 
     def _parse_metadata(self, soup: BeautifulSoup, html: str) -> dict[str, object]:
         """Page metadata plus the ``extras`` from :meth:`parse_extras` (when any were found)."""
@@ -364,7 +393,9 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
                 if not isinstance(anchor, Tag):
                     continue
                 title = clean_text(anchor.get_text())
-                url = self._decode_google_redirect(str(anchor.get("href", "")))
+                url = self._absolute_google_url(
+                    self._decode_google_redirect(str(anchor.get("href", "")))
+                )
                 key = (title.casefold(), url)
                 if title and url and key not in seen_sitelinks:
                     seen_sitelinks.add(key)
@@ -387,6 +418,49 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
                 r"\b\d+\s+(?:minutes?|hours?|days?|weeks?|months?|years?)\s+ago\b", text, re.I
             )
         )
+
+    @staticmethod
+    def _plain_text(text: str | None) -> str:
+        """Clean text that may still carry escaped markup (``<b>Best</b> &amp; ...``).
+
+        Fragments inserted by ``jsl.dh`` are escaped twice, so after parsing their text can still
+        hold literal tags and entities.
+        """
+        text = clean_text(text)
+        if "<" in text or "&" in text:
+            text = clean_text(make_soup(html_unescape(text)).get_text())
+        return text
+
+    @staticmethod
+    def _absolute_google_url(href: str) -> str:
+        """Make a relative Google link (``/search?q=...``) absolute.
+
+        ``/url?`` and ``/goto?`` redirects stay relative: they carry encrypted tokens that the
+        caller resolves. Google search links keep only their search parameters, not the
+        requesting client's session parameters (``client=``, ``channel=``, ``sca_esv``...).
+        """
+        if href.startswith("/") and not href.startswith(("//", "/url?", "/goto?")):
+            href = urljoin("https://www.google.com", href)
+        parsed = urlparse(href)
+        if parsed.path == "/search" and "google." in parsed.netloc:
+            kept = [
+                (key, value)
+                for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+                if key in _SEARCH_LINK_PARAMS
+            ]
+            href = parsed._replace(query=urlencode(kept)).geturl()
+        return href
+
+    @staticmethod
+    def _is_google_internal(url: str) -> bool:
+        """Whether an organic-looking link points at Google itself (image/video viewers, searches)."""
+        if url.startswith(("/url?", "/goto?")):
+            return False
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+        if host and not re.fullmatch(r"(?:www\.)?google\.[a-z.]+", host):
+            return False
+        return parsed.path.startswith(("/search", "/searchviewer", "/imgres", "/maps", "/shopping"))
 
     @staticmethod
     def _decode_google_redirect(href: str) -> str:
@@ -466,13 +540,28 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         description = (
             clean_text(description_el.get_text()) if isinstance(description_el, Tag) else None
         )
+        if not description:
+            # Current layout: the ad copy is a plain div.J094Fd; the seller-rating row reuses
+            # the class, so skip blocks that hold the rating.
+            for block in card.find_all("div", class_="J094Fd"):
+                if isinstance(block, Tag) and not block.find(class_="yi40Hd"):
+                    description = clean_text(block.get_text()) or None
+                    if description:
+                        break
 
-        metadata: dict[str, object] = {}
+        # The href is a Google click-tracking URL (/aclk). The landing page is not in the HTML;
+        # expose the advertiser's site (from the display URL) as ``url`` and keep the click URL
+        # as ``tracking_url``. Never fetch the tracking URL: it registers a billable ad click.
+        metadata: dict[str, object] = {"tracking_url": url}
         display_el = card.find(attrs={"data-dtld": True})
         if isinstance(display_el, Tag):
             display_url = clean_text(display_el.get_text()) or str(display_el.get("data-dtld", ""))
             if display_url:
                 metadata["display_url"] = display_url
+            domain = str(display_el.get("data-dtld", "")).lower()
+            if domain:
+                metadata["domain"] = domain
+            url = self._advertiser_url(display_url, domain) or url
 
         rating_el = card.find(class_="yi40Hd")
         if isinstance(rating_el, Tag):
@@ -487,7 +576,7 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             if phone:
                 metadata["phone"] = phone
 
-        sitelinks: list[dict[str, str]] = []
+        sitelinks: list[dict[str, str | None]] = []
         seen: set[tuple[str, str]] = set()
         for sitelink_root in card.select(".E8hWLe, .qmaLCb"):
             for sitelink in sitelink_root.find_all("a", href=True):
@@ -498,7 +587,11 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
                 key = (sitelink_title.casefold(), sitelink_url)
                 if sitelink_title and sitelink_url and key not in seen:
                     seen.add(key)
-                    sitelinks.append({"title": sitelink_title, "url": sitelink_url})
+                    # Ad sitelinks only carry click-tracking URLs; there is no landing page to give.
+                    # ``url`` stays as a key (None) so callers reading sitelink["url"] keep working.
+                    sitelinks.append(
+                        {"title": sitelink_title, "url": None, "tracking_url": sitelink_url}
+                    )
         if sitelinks:
             metadata["sitelinks"] = sitelinks
 
@@ -510,6 +603,19 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             result_type="sponsored",
             metadata=metadata,
         )
+
+    @staticmethod
+    def _advertiser_url(display_url: str, domain: str) -> str | None:
+        """Build the advertiser's URL from an ad's display URL (``www.surfshark.com/deals``)."""
+        candidate = display_url.split(" ")[0].strip("› ")
+        candidate = candidate.replace(" › ", "/").replace("›", "/")
+        if candidate and "." in candidate and " " not in candidate:
+            if not candidate.startswith(("http://", "https://")):
+                candidate = "https://" + candidate
+            parsed = urlparse(candidate)
+            if parsed.netloc and (not domain or parsed.netloc.lower().endswith(domain)):
+                return candidate
+        return f"https://{domain}/" if domain else None
 
     @staticmethod
     def _merge_result_metadata(target: dict[str, object], source: dict[str, object]) -> None:
@@ -588,9 +694,300 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         except ValueError:
             return None
 
+    # --- AI Overview -------------------------------------------------------------------------
+    # Chrome layout (desktop and mobile Chrome UA): root div[data-rl] > section.bzXtMb, heading
+    # strong.WJFise "AI Overview", text in div.mZJni[data-container-id=main-col]. Most of the text,
+    # the source records and the chip blobs arrive as jsl.dh fragments (double- or single-quoted
+    # JS strings) and must be spliced in before parsing. Opera Mini layout: div.xpd with .gqwIMe,
+    # lead in div.frRrnc, the rest in a window.jsl.dh('accdef_..') fragment (#B2Jtyd) and cards in
+    # div.pcitem. Both layouts carry the full text in the HTML; "Show more" is client-side only.
+
+    _AIO_UUID = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+    _JSL_DH_ANY = re.compile(
+        r"(?:\[\{id:'([^']+)'\},function\(\)\{jsl\.dh\(this\.id,|(?:window\.)?jsl\.dh\(\s*'([^']+)'\s*,\s*)"
+        r"(?:\"((?:[^\"\\]|\\.)*)\"|'((?:[^'\\]|\\.)*)')\)",
+        re.S,
+    )
+    _AIO_NOISE = {
+        "Show more",
+        "Show less",
+        "Show all",
+        "AI Mode replied:",
+        "Can't generate an AI overview right now. Try again later.",
+    }
+
+    @staticmethod
+    def _js_unescape(value: str) -> str:
+        """Single-pass JS string unescape. ``\\\\u003d`` (a JSON escape inside a blob) stays ``\\u003d``."""
+
+        def rep(m: re.Match[str]) -> str:
+            e = m.group(1)
+            if e[0] in "xu" and len(e) > 1:
+                return chr(int(e[1:], 16))
+            return {"n": "\n", "t": "\t", "r": ""}.get(e, e)
+
+        return re.sub(r"\\(x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)", rep, value)
+
+    def _splice_jsl_dh(self, soup: BeautifulSoup, root: Tag) -> None:
+        """Insert jsl.dh fragments whose target id lies inside ``root`` (what the page JS does).
+        Mutates ``soup``; callers pass a copy."""
+        frags: list[tuple[str, str]] = []
+        for script in soup.find_all("script"):
+            text = script.string or script.get_text() if isinstance(script, Tag) else ""
+            if "jsl.dh(" not in text:
+                continue
+            for m in self._JSL_DH_ANY.finditer(text):
+                body = m.group(3) if m.group(3) is not None else m.group(4)
+                frags.append((m.group(1) or m.group(2), self._js_unescape(body)))
+        for _ in range(6):  # fragments can target ids created by other fragments
+            left = []
+            for fid, body in frags:
+                el = root.find(id=fid)
+                if not isinstance(el, Tag):
+                    left.append((fid, body))
+                    continue
+                el.clear()
+                for child in list(make_soup(body).contents):
+                    el.append(child)
+            if len(left) == len(frags):
+                break
+            frags = left
+
+    @staticmethod
+    def _aio_blob(comment: str) -> list[Any] | None:
+        try:
+            # entities are not decoded inside HTML comments: &quot; -> "
+            value = json.loads(html_unescape(comment.split("|||", 1)[1]))
+        except (IndexError, ValueError):
+            return None
+        return value if isinstance(value, list) else None
+
+    def _find_chrome_aio_root(self, soup: BeautifulSoup) -> Tag | None:
+        for strong in soup.select('div[role="heading"] strong'):
+            if clean_text(strong.get_text()) == "AI Overview":
+                node = strong.find_parent(attrs={"data-rl": True})
+                if isinstance(node, Tag):
+                    return node
+        container = soup.find("div", class_="YzCcne")
+        return container if isinstance(container, Tag) else None
+
+    def _chrome_aio_text(self, main: Tag) -> tuple[str, list[tuple[str, str]]]:
+        """Visible text plus (sentence, chip-uuid) pairs, a chip citing the text right before it."""
+        parts: list[str] = []
+        cur: list[str] = []
+        prev = [""]
+        cites: list[tuple[str, str]] = []
+        blocks = {"div", "li", "ul", "ol", "p", "h3", "table", "tr"}
+        chip_re = re.compile(r"nCd0md\|(" + self._AIO_UUID + r")-")
+
+        def boundary() -> None:
+            t = clean_text("".join(cur))
+            if t:
+                prev[0] = t
+            cur.clear()
+
+        def walk(el: Tag) -> None:
+            for child in el.children:
+                if isinstance(child, Comment):
+                    continue
+                if isinstance(child, NavigableString):
+                    parts.append(str(child))
+                    cur.append(str(child))
+                    continue
+                if not isinstance(child, Tag):
+                    continue
+                classes = child.get("class") or []
+                if (
+                    child.name in ("script", "style", "svg", "button")
+                    or child.get("aria-hidden") == "true"
+                    or "MheKwc" in classes
+                    or child.has_attr("data-crb-el")
+                    or (child.name == "a" and "AgMx9c" in classes)
+                ):
+                    continue  # chips' buttons, hidden labels, mobile source carousels, video cards
+                m = chip_re.match(str(child.get("data-suuid", "")))
+                if m:
+                    sentence = clean_text("".join(cur)) or prev[0]
+                    sentence = (
+                        re.split(r"(?<=[.!?:])\s+(?=[A-Z0-9])", sentence)[-1] if sentence else ""
+                    )
+                    cites.append((sentence, m.group(1)))
+                    cur.clear()
+                    prev[0] = ""
+                    continue
+                if child.name in blocks:
+                    parts.append("\n")
+                    boundary()
+                    walk(child)
+                    parts.append("\n")
+                    boundary()
+                else:
+                    walk(child)
+
+        walk(main)
+        lines = [clean_text(line) for line in "".join(parts).split("\n")]
+        return "\n".join(x for x in lines if x and x not in self._AIO_NOISE), cites
+
+    def _extract_chrome_ai_overview(self, soup: BeautifulSoup, root: Tag) -> SearchResult | None:
+        # Work on a copy: fragments are spliced document-wide (the source records live in the
+        # side panel, outside the overview root) without changing what the other extractors see.
+        soup = copy.copy(soup)
+        found = self._find_chrome_aio_root(soup)
+        if not isinstance(found, Tag):
+            return None
+        root = found
+        self._splice_jsl_dh(soup, soup)
+        main = root.select_one('div[data-container-id="main-col"]') or root.find(
+            "div", class_="mZJni"
+        )
+        if not isinstance(main, Tag):
+            return None
+        text, cites = self._chrome_aio_text(main)
+        if not text:
+            return None
+        uuid = self._AIO_UUID
+        # 1) source records, in document order (== the side-panel order)
+        records: dict[str, dict[str, object]] = {}
+        refs: dict[str, list[str]] = {}
+        cited = set(re.findall(r'data-suuid="nCd0md\|(' + uuid + r")-", str(root)))
+        for el in soup.select('[data-suuid^="X1OVdc|"]'):
+            m = re.match(r"X1OVdc\|(" + uuid + r")-([0-9_]+)\|", str(el.get("data-suuid", "")))
+            comment = next(
+                (c for c in el.children if isinstance(c, Comment) and c.startswith("TgQPHd|||")),
+                None,
+            )
+            blob = self._aio_blob(str(comment)) if m and comment is not None else None
+            rec = blob[0][1] if blob and blob[0] and len(blob[0]) > 1 else None
+            if not m or m.group(1) not in cited or not isinstance(rec, list) or len(rec) < 9:
+                continue
+            idx = str(rec[8] or m.group(2))
+            refs.setdefault(m.group(1), []).append(idx)
+            records.setdefault(
+                idx,
+                {
+                    "title": html_unescape(str(rec[0] or "")),
+                    "snippet": html_unescape(str(rec[1] or "")),
+                    "origin": rec[3] or "",
+                    "source": rec[4][0] if isinstance(rec[4], list) and rec[4] else None,
+                    "redirect": rec[5] or "",
+                },
+            )
+        # 2) chip blobs (site, count, url of the chip's primary source) and reference blobs
+        chips: dict[str, str] = {}
+        for comment in soup.find_all(
+            string=lambda s: isinstance(s, Comment) and s.startswith("TgQPHd|||[[")
+        ):
+            blob = self._aio_blob(str(comment))
+            if (
+                not blob
+                or not isinstance(blob[0], list)
+                or not blob[0]
+                or not re.fullmatch(uuid, str(blob[0][0]))
+            ):
+                continue
+            row = blob[0]
+            if (
+                len(row) > 7
+                and row[1] is None
+                and row[3] == 0
+                and isinstance(row[7], str)
+                and row[7]
+            ):
+                chips.setdefault(row[0], row[7])
+            elif (
+                len(row) > 1
+                and isinstance(row[1], list)
+                and len(row[1]) == 1
+                and isinstance(row[1][0], str)
+            ):
+                lst = refs.setdefault(row[0], [])
+                if row[1][0] not in lst:
+                    lst.append(row[1][0])
+
+        # 3) real URLs: single-reference chips first, then the unique same-host reference
+        def host(u: object) -> str:
+            return urlparse(str(u or "")).netloc.lower().removeprefix("www.")
+
+        url_of: dict[str, str] = {}
+        for multi in (False, True):
+            for chip, url in chips.items():
+                r = refs.get(chip, [])
+                if not r or (len(r) > 1) != multi or url in url_of.values():
+                    continue
+                cand = [
+                    i
+                    for i in r
+                    if i not in url_of and i in records and host(records[i]["origin"]) == host(url)
+                ]
+                if len(cand) == 1:
+                    url_of[cand[0]] = url
+        sources: list[dict[str, object]] = []
+        position_of: dict[str, int] = {}
+        for position, (idx, rec) in enumerate(records.items(), start=1):
+            position_of[idx] = position
+            url = url_of.get(idx) or str(
+                rec["redirect"]
+            )  # "/goto?url=CAES..." -> resolved by the caller
+            sources.append(
+                {
+                    "position": position,
+                    "title": rec["title"],
+                    "url": url,
+                    "domain": host(rec["origin"]) or host(url) or None,
+                    "source": rec["source"],
+                    "snippet": rec["snippet"],
+                    "redirect": rec["redirect"],
+                }
+            )
+        if not sources:  # older builds (no X1OVdc records): plain links inside the overview
+            legacy = root.find_parent("div", class_="YzCcne") or root
+            for link in legacy.find_all("a", href=True):
+                href, title = str(link.get("href", "")), clean_text(link.get_text())
+                if href.startswith("http") and title:
+                    sources.append(
+                        {
+                            "position": len(sources) + 1,
+                            "title": title,
+                            "url": href,
+                            "domain": host(href) or None,
+                        }
+                    )
+        citations = [
+            {
+                "sentence": sentence,
+                "source_positions": [
+                    position_of[i] for i in refs.get(chip, []) if i in position_of
+                ],
+            }
+            for sentence, chip in cites
+        ]
+        truncated = soup.select_one('[aria-label="Show more AI Overview"]') is not None
+        return SearchResult(
+            title="AI Overview",
+            url="",
+            description=text,
+            position=0,
+            result_type="ai_overview",
+            metadata={
+                "present": True,
+                "layout": "chrome",
+                "text": text,
+                "truncated": truncated,
+                "sources": sources,
+                "citations": [c for c in citations if c["sentence"]],
+            },
+        )
+
     def _extract_ai_overview(self, soup: BeautifulSoup) -> SearchResult | None:
-        """Extract AI Overview section if present (desktop and mobile)."""
-        # Desktop: div.YzCcne container
+        """Extract AI Overview section if present (Chrome desktop/mobile and Opera Mini)."""
+        root = self._find_chrome_aio_root(soup)
+        if isinstance(root, Tag) and root.select_one(
+            'div[data-container-id="main-col"], div.mZJni'
+        ):
+            result = self._extract_chrome_ai_overview(soup, root)
+            if result is not None:
+                return result
+        # Legacy desktop: div.YzCcne container
         container = soup.find("div", class_="YzCcne")
         if isinstance(container, Tag):
             content_div = container.find("div", class_="mZJni")
@@ -626,10 +1023,26 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             description = clean_text(content_div.get_text())
             if description:
                 metadata = self._extract_mobile_ai_metadata(soup, xpd)
+                blocks = metadata.get("blocks")
+                full = "\n".join(
+                    [description, *(blocks if isinstance(blocks, list) else [])]
+                ).strip()
+                metadata.pop("blocks", None)
+                metadata.update(
+                    {
+                        "present": True,
+                        "layout": "opera",
+                        "text": full,
+                        # the rest sits in the accdef fragment behind a client-side "Show more"
+                        "truncated": bool(metadata.get("_collapsed")),
+                        "citations": [],  # the Opera layout has no per-sentence citation markers
+                    }
+                )
+                metadata.pop("_collapsed", None)
                 return SearchResult(
                     title="AI Overview",
                     url="",
-                    description=description,
+                    description=full,
                     position=0,
                     result_type="ai_overview",
                     metadata=metadata,
@@ -647,9 +1060,11 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         }
         roots.extend(self._extract_jsl_dh_fragments(soup, placeholder_ids or None))
 
-        sources: list[dict[str, str]] = []
+        sources: list[dict[str, object]] = []
         seen_sources: set[tuple[str, str]] = set()
         details: list[str] = []
+        blocks: list[str] = []
+        collapsed = False
 
         for root in roots:
             for card in root.select(".pcitem"):
@@ -657,15 +1072,27 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
                 title_el = card.find(class_="UFvD1")
                 if not isinstance(link, Tag) or not isinstance(title_el, Tag):
                     continue
-                title = clean_text(title_el.get_text())
+                title = self._plain_text(title_el.get_text())
                 url = self._decode_google_redirect(str(link.get("href", "")))
                 source_el = card.find(class_="BamJPe")
-                source = clean_text(source_el.get_text()) if isinstance(source_el, Tag) else ""
+                source = (
+                    self._plain_text(source_el.get_text()) if isinstance(source_el, Tag) else ""
+                )
                 key = (title.casefold(), url)
                 if not title or not url or key in seen_sources:
                     continue
                 seen_sources.add(key)
-                citation = {"title": title, "url": url}
+                # Opera cards carry no destination: url stays "/url?..q=CAES.." for the caller to
+                # resolve; domain is filled in after resolution. Titles are cut server-side ("...").
+                citation: dict[str, object] = {
+                    "position": len(sources) + 1,
+                    "title": title,
+                    "url": url,
+                    "domain": urlparse(url).netloc.lower().removeprefix("www.")
+                    if url.startswith("http")
+                    else None,
+                    "title_truncated": title.endswith(("...", "…")),
+                }
                 if source:
                     citation["source"] = source
                 sources.append(citation)
@@ -673,14 +1100,32 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             details_root = root.find(id="B2Jtyd")
             if not isinstance(details_root, Tag):
                 continue
-            for detail_el in details_root.find_all("li"):
-                if not isinstance(detail_el, Tag):
+            collapsed = True
+            # Full text in document order: headings / paragraphs are innermost div.ilUpNd
+            # (inside div.ZTQ50), list items are ul.UK7GAc > li (the last li has no class).
+            for el in details_root.find_all(["div", "li"]):
+                if not isinstance(el, Tag):
                     continue
-                detail = clean_text(detail_el.get_text())
-                if detail and detail not in details:
-                    details.append(detail)
+                is_par = (
+                    el.name == "div"
+                    and "ilUpNd" in (el.get("class") or [])
+                    and not el.find(["ul", "li"])
+                    and not el.find("div", class_="ilUpNd")
+                )
+                if el.name != "li" and not is_par:
+                    continue
+                text = re.sub(r"\s+([.,;:])", r"\1", clean_text(el.get_text(" ")))
+                if not text or text in self._AIO_NOISE:
+                    continue
+                blocks.append(text)
+                if el.name == "li" and text not in details:
+                    details.append(text)
 
-        metadata: dict[str, object] = {"sources": sources}
+        metadata: dict[str, object] = {
+            "sources": sources,
+            "blocks": blocks,
+            "_collapsed": collapsed,
+        }
         if details:
             metadata["details"] = details
         return metadata

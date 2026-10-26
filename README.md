@@ -273,28 +273,34 @@ md_str = results.to_markdown()
     "position": 0,
     "result_type": "ai_overview",
     "metadata": {
+      "present": true,
+      "layout": "chrome",
+      "text": "Python is a widely used language for web scraping...",
+      "truncated": false,
       "sources": [
-        {"title": "Beautiful Soup", "url": "https://www.crummy.com/software/BeautifulSoup/", "source": "Beautiful Soup"},
-        {"title": "Requests", "url": "https://requests.readthedocs.io/", "source": "Requests"}
+        {"position": 1, "title": "Beautiful Soup", "url": "https://www.crummy.com/software/BeautifulSoup/", "domain": "www.crummy.com", "source": "Beautiful Soup"},
+        {"position": 2, "title": "Requests", "url": "https://requests.readthedocs.io/", "domain": "requests.readthedocs.io", "source": "Requests"}
       ],
-      "details": ["HTML parsers turn result markup into a searchable tree."]
+      "citations": [{"sentence": "Python is a widely used language for web scraping.", "source_positions": [1, 2]}]
     }
   },
   "people_also_ask": [
-    {"title": "Is Python good for web scraping?", "url": "", "position": 0, "result_type": "people_also_ask", "metadata": {}}
+    {"title": "Is Python good for web scraping?", "url": "", "position": 1, "result_type": "people_also_ask", "metadata": {}}
   ],
   "sponsored": [
     {
       "title": "Sponsored result",
-      "url": "http://www.google.com/aclk?...",
+      "url": "https://www.example.com/",
       "description": "An advertiser description.",
-      "position": 0,
+      "position": 1,
       "result_type": "sponsored",
       "metadata": {
         "display_url": "www.example.com/",
+        "domain": "example.com",
+        "tracking_url": "http://www.google.com/aclk?...",
         "rating": "4.7",
         "phone": "(800) 555-0100",
-        "sitelinks": [{"title": "Current offers", "url": "http://www.google.com/aclk?..."}]
+        "sitelinks": [{"title": "Current offers", "url": null, "tracking_url": "http://www.google.com/aclk?..."}]
       }
     }
   ],
@@ -306,7 +312,7 @@ md_str = results.to_markdown()
       "title": "Global Supply Chain Director",
       "url": "https://www.google.com/search?q=%22Supply+Chain+Director&udm=8",
       "description": null,
-      "position": 0,
+      "position": 1,
       "result_type": "job",
       "metadata": {
         "company": "InterSources, Inc.",
@@ -319,7 +325,7 @@ md_str = results.to_markdown()
       "title": "Being considered for Director of Supply Chain",
       "url": "https://www.reddit.com/r/supplychain/comments/1ib0c1a/being_considered_for_director_of_supply_chain/",
       "description": "I work for a mid-sized company as a Procurement Manager...",
-      "position": 0,
+      "position": 1,
       "result_type": "discussion",
       "metadata": {
         "source": "Reddit · r/supplychain · 10+ comments · 1 year ago"
@@ -331,7 +337,7 @@ md_str = results.to_markdown()
       "title": "ALCON - Precision7 , 12 Pack",
       "url": "http://www.google.com/aclk?sa=L&ai=...",
       "description": null,
-      "position": 0,
+      "position": 1,
       "result_type": "shopping_ad",
       "metadata": {
         "price": "$51.19",
