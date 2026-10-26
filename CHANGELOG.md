@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.12] - 2026-10-26
+
+### Changed
+
+- Locked development and CI dependencies refreshed (`uv lock --upgrade`), including the dependabot
+  updates for certifi, urllib3 and virtualenv. Runtime dependency ranges in `pyproject.toml` are unchanged
+
+---
+
 ## [0.5.11] - 2026-10-26
 
 ### Added
@@ -189,8 +198,8 @@ from search_parser import GoogleFinanceParser
 parser = GoogleFinanceParser()
 results = parser.parse(html)
 
-print(results.query)                          # "GOOGL:NASDAQ"
-print(results.stock_quote.metadata["price"]) # 339.32
+print(results.query)  # "GOOGL:NASDAQ"
+print(results.stock_quote.metadata["price"])  # 339.32
 print(results.company_info.metadata["ceo"])  # "Sundar Pichai"
 print(results.financial_news[0].title)
 
@@ -198,9 +207,9 @@ print(results.financial_news[0].title)
 from search_parser import GoogleFinanceScraper
 
 scraper = GoogleFinanceScraper()
-data = scraper.scrape("GOOGL:NASDAQ")   # stocks
-data = scraper.scrape("BTC-USD")        # crypto
-data = scraper.scrape("EUR-USD")        # FX
+data = scraper.scrape("GOOGL:NASDAQ")  # stocks
+data = scraper.scrape("BTC-USD")  # crypto
+data = scraper.scrape("EUR-USD")  # FX
 
 print(data.quote.price)
 print(data.company.sector)
@@ -305,7 +314,7 @@ sponsored = [r for r in results.results if r.result_type == "sponsored"]
 
 # After
 featured = results.featured_snippet  # SearchResult | None
-sponsored = results.sponsored         # list[SearchResult]
+sponsored = results.sponsored  # list[SearchResult]
 ```
 
 ---

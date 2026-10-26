@@ -128,7 +128,9 @@ for article in results.news:
 # Local business pack — metadata includes rating, reviews, category, location, hours, phone, sponsored
 for biz in results.local_businesses:
     print(biz.title)
-    print(f"  {biz.metadata['rating']} ({biz.metadata.get('reviews')} reviews) · {biz.metadata.get('category')}")
+    print(
+        f"  {biz.metadata['rating']} ({biz.metadata.get('reviews')} reviews) · {biz.metadata.get('category')}"
+    )
     print(f"  {biz.metadata.get('location')} · {biz.metadata.get('phone')}")
     print(f"  {biz.metadata.get('hours')}")
     if biz.metadata.get("sponsored"):

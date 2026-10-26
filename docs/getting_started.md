@@ -100,7 +100,7 @@ for job in data["jobs"]:
     print("Job:", job["title"])
     print("  Company:", job["metadata"]["company"])
     print("  Location:", job["metadata"]["location"])
-    print("  Salary:", job["metadata"].get("salary"))          # None if not listed
+    print("  Salary:", job["metadata"].get("salary"))  # None if not listed
     print("  Type:", job["metadata"].get("employment_type"))
     print("  Benefits:", job["metadata"].get("benefits", []))
 
@@ -127,9 +127,9 @@ for article in data["news"]:
     print("  Published:", article["metadata"]["published_time"])
 
 # Metadata
-print(data["query"])           # "python web scraping"
-print(data["total_results"])   # 26200000 or None
-print(data["search_engine"])   # "google"
+print(data["query"])  # "python web scraping"
+print(data["total_results"])  # 26200000 or None
+print(data["search_engine"])  # "google"
 print(data["metadata"].get("location"))
 print(data["metadata"].get("location_source"))
 print(data["metadata"].get("pagination", {}).get("next_url"))

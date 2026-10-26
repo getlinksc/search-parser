@@ -15,11 +15,11 @@ Google wraps result links in a redirect of the form `/url?q=<percent-encoded des
 ```python
 # before — desktop
 result.url
-'/url?q=https%3A%2F%2Fexample.com%2Fpage%3Fid%3D1&sa=U&ved=...'
+"/url?q=https%3A%2F%2Fexample.com%2Fpage%3Fid%3D1&sa=U&ved=..."
 
 # after
 result.url
-'https://example.com/page?id=1'
+"https://example.com/page?id=1"
 ```
 
 Both desktop branches (the `div.yuRUbf` container path and the direct `<a>` + `<h3>` fallback) now decode. Pages that already carry absolute `href`s are unaffected — `_decode_google_redirect` returns non-matching hrefs untouched.
@@ -74,10 +74,7 @@ scrapers/google_finance.py:181: error: Argument 1 to "_build_body" has incompati
 The batchexecute payload list mixes `str` and nested-`list` values, so mypy joined the dict value types down to `object` and inferred the list as `list[object]`. It is now annotated explicitly:
 
 ```python
-requests: list[dict[str, Any]] = [
-    {"id": "xh8wxf", "req": [[t], 1]},
-    ...
-]
+requests: list[dict[str, Any]] = [{"id": "xh8wxf", "req": [[t], 1]}, ...]
 ```
 
 Annotation only — no runtime change.

@@ -180,10 +180,10 @@ for article in data["news"]:
     print(article["metadata"]["source"], article["metadata"]["published_time"])
 
 # Metadata
-print(data["search_engine"])        # "google"
-print(data["query"])                # "python web scraping"
-print(data["total_results"])        # 26200000 or None
-print(data["detection_confidence"]) # 0.95
+print(data["search_engine"])  # "google"
+print(data["query"])  # "python web scraping"
+print(data["total_results"])  # 26200000 or None
+print(data["detection_confidence"])  # 0.95
 print(data["metadata"].get("location"))
 print(data["metadata"].get("location_source"))
 print(data["metadata"].get("pagination", {}).get("next_url"))

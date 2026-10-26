@@ -26,7 +26,7 @@ for job in results.jobs:
     print(job.title)
     print(job.metadata["company"])
     print(job.metadata["location"])
-    print(job.metadata.get("salary"))        # None if not listed
+    print(job.metadata.get("salary"))  # None if not listed
     print(job.metadata.get("employment_type"))
     print(job.metadata.get("benefits", []))
 ```
