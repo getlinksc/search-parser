@@ -138,6 +138,27 @@ class TestGoogleParser:
         for r in results.results:
             assert r.result_type == "organic"
 
+    def test_parse_chrome_layout_sponsored(self, google_chrome_ads_html: str) -> None:
+        # Desktop Chrome layout: a.sVXRqc headline with a /goto href and the landing URL in data-pcu.
+        sponsored = self.parser.parse(google_chrome_ads_html).sponsored
+        assert [r.url for r in sponsored] == [
+            "https://www.geico.com/",
+            "https://www.libertymutual.com/",
+            "https://www.nerdwallet.com/",
+            "https://www.thezebra.com/",
+            "https://www.statefarm.com/",
+            "https://insurify.com/",
+        ]
+        geico = sponsored[0]
+        assert geico.title.startswith("GEICO")
+        assert geico.description and geico.description.startswith("GEICO")
+        assert geico.metadata["domain"] == "geico.com"
+        assert geico.metadata["display_url"] == "https://www.geico.com › quote"
+        assert str(geico.metadata["tracking_url"]).startswith("/goto?")
+        sitelinks = [s for r in sponsored for s in r.metadata.get("sitelinks", [])]
+        assert sitelinks
+        assert all(s["url"] is None and s["tracking_url"] for s in sitelinks)
+
     def test_parse_no_sponsored_returns_empty(self, google_organic_html: str) -> None:
         results = self.parser.parse(google_organic_html)
         assert results.sponsored == []

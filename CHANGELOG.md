@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.14] - 2026-10-26
+
+### Fixed
+
+- Ads on the desktop Chrome layout are returned again. The headline link there is `a.sVXRqc` with a
+  `/goto?url=CAES...` href, which the parser rejected, so these pages gave no `sponsored` results. The
+  ad's `url` is now the landing page from `data-pcu`; the `/goto` click URL is in `metadata["tracking_url"]`,
+  with `display_url`, `domain`, description and sitelinks as for no-JS mobile ads
+- Ads parsed from a `uEierd` card are no longer returned a second time from their `data-text-ad` wrapper
+
 ## [0.5.13] - 2026-10-26
 
 ### Added

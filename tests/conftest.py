@@ -45,6 +45,11 @@ def google_scheduling_app_html() -> str:
 
 
 @pytest.fixture()
+def google_chrome_ads_html() -> str:
+    return (FIXTURES_DIR / "google" / "car_insurance_quotes_chrome_ads.html").read_text()
+
+
+@pytest.fixture()
 def duckduckgo_organic_html() -> str:
     return (FIXTURES_DIR / "duckduckgo" / "organic_results.html").read_text()
 

@@ -486,6 +486,7 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
     def _extract_sponsored_results(self, soup: BeautifulSoup) -> list[SearchResult]:
         """Extract sponsored (ad) results from Google search pages."""
         results: list[SearchResult] = []
+        parsed_ads: list[Tag] = []
         for block in soup.find_all("div", class_="vbIt3d"):
             if not isinstance(block, Tag):
                 continue
@@ -493,12 +494,20 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
                 result = self._parse_sponsored_ad(ad)
                 if result:
                     results.append(result)
+                    parsed_ads.append(ad)
 
         # No-JS mobile ads are wrapped in data-text-ad containers and use
         # the same xpd card shell as other mobile result types.
         opera_results: list[SearchResult] = []
         for ad_wrapper in soup.find_all(attrs={"data-text-ad": "1"}):
             if not isinstance(ad_wrapper, Tag):
+                continue
+            # Skip cards the uEierd pass above already returned.
+            wrapper_chain = {id(ad_wrapper), *(id(p) for p in ad_wrapper.parents)}
+            if any(
+                id(ad) in wrapper_chain or any(p is ad_wrapper for p in ad.parents)
+                for ad in parsed_ads
+            ):
                 continue
             result = self._parse_no_js_mobile_sponsored_ad(ad_wrapper)
             if result:
@@ -528,6 +537,9 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             card = wrapper
 
         link = card.find("a", class_="cz3goc")
+        if not isinstance(link, Tag):
+            # Desktop Chrome layout: the headline anchor is a.sVXRqc with a /goto href.
+            link = card.find("a", class_="sVXRqc")
         if not isinstance(link, Tag):
             return None
         heading = link.find(attrs={"role": "heading"})
@@ -562,6 +574,10 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             if domain:
                 metadata["domain"] = domain
             url = self._advertiser_url(display_url, domain) or url
+        # data-pcu lists the landing URL first, then measurement hosts.
+        landing = str(link.get("data-pcu", "")).split(",")[0].strip()
+        if landing.startswith(("http://", "https://")):
+            url = landing
 
         rating_el = card.find(class_="yi40Hd")
         if isinstance(rating_el, Tag):
