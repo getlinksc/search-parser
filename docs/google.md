@@ -112,3 +112,38 @@ are returned in `SearchResults.metadata`:
 
 Depending on the page, `pagination` can contain `next_url`, `next_start`,
 `previous_url`, and `previous_start`.
+
+## Extras: videos, answers, knowledge panel, ads and more
+
+Some page parts do not have a typed field on `SearchResults`. `GoogleParser.parse_extras(html)`
+returns them as plain dicts and lists, and `parse()` also stores the same dict in
+`SearchResults.metadata["extras"]` whenever at least one part was found.
+
+```python
+from search_parser import GoogleParser
+
+extras = GoogleParser().parse_extras(html)
+# or: GoogleParser().parse(html).metadata.get("extras", {})
+```
+
+Only the keys that were found are present. Every part is parsed independently, so a layout change
+that breaks one selector costs only that key.
+
+| Key | Type | Content |
+| --- | --- | --- |
+| `total` / `total_text` | `int` / `str` | Result count and the text it came from (for example `About 1,234 results`). Works on the raw document, where Google writes it as a JS string, and on rendered markup. The first non-zero figure wins over a placeholder `About 0 results`. |
+| `videos` | `list[dict]` | `title`, `url`, `site`, `channel`, `stats`, `date`, `duration`, `position`. |
+| `pagination` | `dict` | `next_start`, `prev_start`, `has_next` from the Next and Previous links. The older `metadata["pagination"]` (URLs) is unchanged. |
+| `answers` | `list[dict]` | Outermost `data-attrid` blocks (up to 12): `attrid`, `text`, `url`. Hidden duplicate text (`aria-hidden`) is dropped. |
+| `answer_box` | `dict` | The expanded answer box: `title`, `text`, `url`. |
+| `knowledge_panel` | `dict` | The right-hand panel: `title`, `text`, and up to 25 deduplicated `links`. |
+| `discussions` | `list[dict]` | "Discussions and forums" threads: `title`, `url`, `source`, `meta`, `position`. |
+| `ads` | `list[dict]` | Ads in the Chrome (JS) layout: `title`, `link`, `display_url`, `advertiser`, `description`, `position`, `result_type`, `metadata.slot`. |
+
+Notes:
+
+* Relative links are made absolute (`https://www.google.com/...`). `/goto?url=CAES...` tokens are
+  returned as they are, because resolving them needs a request; resolve them with your own HTTP
+  client (a GET without following redirects answers 302 with the destination in `Location`).
+* Ad destinations come from `data-pcu`. The `/aclk` click URL is never read or returned: requesting it
+  is a billable ad click.

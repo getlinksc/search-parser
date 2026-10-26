@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.11] - 2026-10-26
+
+### Added
+
+- `GoogleParser.parse_extras(html)` returns page parts that `SearchResults` has no field for: result
+  count (`total`, `total_text`), `videos`, `pagination` (`next_start`, `prev_start`, `has_next`),
+  `answers`, `answer_box`, `knowledge_panel`, `discussions` and Chrome-layout `ads`. Each part is
+  parsed independently, and only the keys that were found are returned
+- `GoogleParser.parse()` stores the same dict in `SearchResults.metadata["extras"]` when it is not
+  empty. Existing metadata keys are unchanged
+- Ad destinations are read from `data-pcu`; the `/aclk` click URL is never read or returned
+- `/goto?url=CAES...` links are returned unresolved (see `docs/google.md`)
+
+### Fixed
+
+- `search_parser.__version__` was left at 0.5.8 by earlier releases; it now matches `pyproject.toml`
+
+---
+
 ## [0.5.10] - 2026-10-03
 
 ### Fixed

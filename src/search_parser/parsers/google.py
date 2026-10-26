@@ -12,12 +12,13 @@ from bs4 import BeautifulSoup, Tag
 
 from search_parser.core.models import SearchResult, SearchResults
 from search_parser.parsers.base import BaseParser
+from search_parser.parsers.google_extras import GoogleExtrasMixin
 from search_parser.utils import clean_text, make_soup
 
 logger = logging.getLogger(__name__)
 
 
-class GoogleParser(BaseParser):
+class GoogleParser(GoogleExtrasMixin, BaseParser):
     """Parser for Google search result pages."""
 
     @property
@@ -80,8 +81,16 @@ class GoogleParser(BaseParser):
             news=self._extract_news_results(soup),
             local_businesses=self._extract_local_businesses(soup),
             detection_confidence=confidence,
-            metadata=self._extract_page_metadata(soup),
+            metadata=self._parse_metadata(soup, html),
         )
+
+    def _parse_metadata(self, soup: BeautifulSoup, html: str) -> dict[str, object]:
+        """Page metadata plus the ``extras`` from :meth:`parse_extras` (when any were found)."""
+        metadata = self._extract_page_metadata(soup)
+        extras = self.parse_extras(html)
+        if extras:
+            metadata["extras"] = extras
+        return metadata
 
     def _find_organic_results(self, soup: BeautifulSoup) -> list[Tag]:
         """Find all organic result containers (desktop and mobile)."""
