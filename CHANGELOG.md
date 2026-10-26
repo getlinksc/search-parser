@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.13] - 2026-10-26
+
+### Fixed
+
+- Google redirects whose destination is an encrypted `CAES` token (`/url?opi=...&q=CAES...&uoh=3`)
+  are no longer unwrapped to the bare token. The href is returned unchanged, like `/goto?url=CAES...`,
+  so the caller can resolve it. This showed up as gibberish `url` values in AI Overview sources
+
+---
+
 ## [0.5.12] - 2026-10-26
 
 ### Changed

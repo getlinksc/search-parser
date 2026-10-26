@@ -451,6 +451,8 @@ class TestGoogleParser:
             ("https://www.google.com/url?opi=89978449&q=https://a.com/&sa=U", "https://a.com/"),
             ("/url?sa=t&source=web&url=https://a.com/&ved=x", "https://a.com/"),
             ("/goto?url=CAESUgHrOzAV", "/goto?url=CAESUgHrOzAV"),
+            ("/url?opi=89978449&q=CAESUgHrOzAV&uoh=3", "/url?opi=89978449&q=CAESUgHrOzAV&uoh=3"),
+            ("/url?sa=t&url=CAESUgHrOzAV", "/url?sa=t&url=CAESUgHrOzAV"),
             ("https://a.com/?q=1", "https://a.com/?q=1"),
             ("", ""),
         ],

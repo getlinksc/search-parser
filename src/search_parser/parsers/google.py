@@ -395,6 +395,8 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         Some Google buckets instead serve ``/goto?url=<blob>`` where the blob is
         encrypted server-side — the destination is nowhere in the HTML, so those
         hrefs are returned unchanged for the caller to resolve over the network.
+        The same goes for ``/url?...&q=CAES...``: the ``CAES`` value is an encrypted
+        token, not a URL, and unwrapping it would leave the caller nothing to resolve.
         """
         if not href:
             return href
@@ -403,7 +405,8 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         for param in ("q", "url"):
             m = re.search(rf"/url\?(?:[^#]*?&)?{param}=([^&]+)", href)
             if m:
-                return unquote(m.group(1))
+                value = unquote(m.group(1))
+                return href if value.startswith("CAES") else value
         return href
 
     def _extract_sponsored_results(self, soup: BeautifulSoup) -> list[SearchResult]:
