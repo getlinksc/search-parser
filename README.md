@@ -47,6 +47,10 @@ if data["ai_overview"]:
 
 for question in data["people_also_ask"]:
     print("PAA:", question["title"])
+
+# Parts without a typed field (videos, answers, knowledge panel, ads, ...) are under metadata["extras"]
+extras = data["metadata"].get("extras", {})
+print(extras.get("total"), len(extras.get("videos", [])))
 ```
 
 ---
