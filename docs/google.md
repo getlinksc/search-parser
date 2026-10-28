@@ -39,6 +39,44 @@ for result in results.results:
 Rich labels, dates, and sitelink text are kept out of `description`; the
 description contains only the result snippet.
 
+On the desktop layout Google can render an organic result as a video card (a thumbnail
+beside the title and snippet) instead of the usual title block. Those cards are ordinary
+entries in `results`, at their position on the page, and a page can be made up of them
+entirely. Their `url` can be a `/goto?url=...` redirect, like other desktop results; it is
+an encrypted token the caller resolves.
+
+## Local business pack
+
+Places packs are returned in `SearchResults.local_businesses`, one `SearchResult` per
+business with `result_type="local_business"`. They are not repeated in `results`. A page
+that only holds a places pack has an empty `results` and a non-empty `local_businesses`.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `rating` | `str` | Rating exactly as displayed |
+| `reviews` | `str` | Review count without parentheses, for example `1,577` |
+| `category` | `str` | Business type, for example `Running store` |
+| `location` | `str` | Town or street address shown beside the category |
+| `hours` | `str` | Opening state as displayed, for example `Closed · Opens 11 AM Mon` |
+| `price` | `str` | Price level, for example `$10–20` (no-JS restaurants) |
+| `phone` | `str` | Phone number (desktop pack) |
+| `sponsored` | `bool` | `True` for a sponsored listing (desktop pack) |
+| `details` | `list[str]` | Every detail line of a no-JS card, in page order |
+
+Every key is optional. On no-JS mobile pages the order of a card's lines depends on the
+kind of business (shops, hotels, gas stations), so `category`, `location` and `hours` are
+filled only when a line's shape makes it clear which it is. Everything else, such as a
+hotel's street address or a gas price, is left in `details`. The `url` of a local business
+is empty.
+
+```python
+for biz in results.local_businesses:
+    meta = biz.metadata
+    print(biz.title, meta.get("rating"), meta.get("reviews"), meta.get("category"))
+    print(meta.get("location"), meta.get("hours"), meta.get("price"))
+    print(meta.get("details", []))
+```
+
 ## Sponsored results
 
 No-JS mobile text ads are returned in `SearchResults.sponsored`. Their optional

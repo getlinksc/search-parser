@@ -130,6 +130,7 @@ for biz in data["local_businesses"]:
     print("  Location:", biz["metadata"].get("location"))
     print("  Phone:", biz["metadata"].get("phone"))
     print("  Hours:", biz["metadata"].get("hours"))
+    print("  Price:", biz["metadata"].get("price"))
     if biz["metadata"].get("sponsored"):
         print("  (sponsored)")
 
