@@ -75,7 +75,9 @@ class TestGoogleParser:
         assert results.search_engine == "google"
         assert results.query == "github repos"
         assert results.detection_confidence >= 0.8
-        assert len(results.results) == 5
+        # 5 web results plus the inline YouTube video card (div.PmEWq) at rank 5
+        assert len(results.results) == 6
+        assert results.results[4].url == "https://www.youtube.com/watch?v=-RZ03WHqkaY"
 
         first = results.results[0]
         assert first.title == "Trending repositories on GitHub today"
@@ -87,7 +89,7 @@ class TestGoogleParser:
     def test_parse_github_repos_positions(self, google_github_repos_html: str) -> None:
         results = self.parser.parse(google_github_repos_html)
         positions = [r.position for r in results.results]
-        assert positions == [1, 2, 3, 4, 5]
+        assert positions == [1, 2, 3, 4, 5, 6]
 
     def test_parse_github_repos_all_have_descriptions(self, google_github_repos_html: str) -> None:
         results = self.parser.parse(google_github_repos_html)
@@ -699,11 +701,14 @@ class TestGoogleParser:
         assert results.search_engine == "google"
         assert results.query == "7"
         assert results.detection_confidence >= 0.8
-        assert len(results.results) == 7
+        # 7 web results plus two inline video cards (div.PmEWq) at ranks 5 and 7
+        assert len(results.results) == 9
+        assert results.results[4].url.startswith("https://music.apple.com/")
+        assert results.results[6].url.startswith("https://www.youtube.com/")
 
     def test_parse_seven_cloak_organic_positions(self, google_seven_cloak_html: str) -> None:
         results = self.parser.parse(google_seven_cloak_html)
-        assert [r.position for r in results.results] == list(range(1, 8))
+        assert [r.position for r in results.results] == list(range(1, 10))
 
     def test_parse_seven_cloak_organic_titles(self, google_seven_cloak_html: str) -> None:
         titles = [r.title for r in self.parser.parse(google_seven_cloak_html).results]

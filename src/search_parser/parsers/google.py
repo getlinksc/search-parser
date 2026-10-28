@@ -167,15 +167,59 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         ]
 
     def _find_results_by_title_links(self, root: Tag) -> list[Tag]:
-        """Find result containers by locating yuRUbf divs and their ancestors."""
+        """Find result containers by locating yuRUbf divs and their ancestors.
+
+        Video-card results (div.PmEWq: title link ``a > h3.LC20lb``, snippet div.ITZIwc) have no
+        yuRUbf, so any LC20lb title outside the containers found so far starts its own block. Both
+        are collected in one pass, so results keep their page order.
+        """
         containers: list[Tag] = []
         seen: set[int] = set()
-        for yu in root.find_all("div", class_="yuRUbf", recursive=True):
-            container = self._find_result_container(yu, root)
+        for el in root.find_all(self._is_title_marker):
+            if any(id(a) in seen for a in el.parents):
+                continue
+            if el.name == "h3":
+                container = self._title_anchor_block(el, root)
+            else:
+                container = self._find_result_container(el, root)
             if isinstance(container, Tag) and id(container) not in seen:
                 seen.add(id(container))
                 containers.append(container)
         return containers
+
+    @staticmethod
+    def _is_title_marker(tag: Tag) -> bool:
+        """Match a yuRUbf title section, or an h3.LC20lb title that sits outside one."""
+        classes = tag.get("class") or []
+        if tag.name == "div":
+            return "yuRUbf" in classes
+        return (
+            tag.name == "h3"
+            and "LC20lb" in classes
+            and tag.find_parent("div", class_="yuRUbf") is None
+        )
+
+    @staticmethod
+    def _title_anchor_block(h3: Tag, root: Tag) -> Tag | None:
+        """Widest ancestor of an ``a > h3`` title that still starts with that link.
+
+        Climbing stops below ``root``, before a parent holding a second LC20lb title, and before a
+        parent whose first link is not the title's, so the block's first ``a`` is the title link.
+        """
+        link = h3.find_parent("a")
+        href = str(link.get("href", "")) if isinstance(link, Tag) else ""
+        if not isinstance(link, Tag) or not href.startswith(("http", "/url?", "/goto?")):
+            return None
+        block: Tag = link
+        while isinstance(block.parent, Tag) and block.parent is not root:
+            parent = block.parent
+            first = parent.find("a")
+            if len(parent.find_all("h3", class_="LC20lb")) != 1 or not isinstance(first, Tag):
+                break
+            if str(first.get("href", "")) != href:
+                break
+            block = parent
+        return block
 
     def _find_result_container(self, title_link: Tag, root: Tag) -> Tag | None:
         """Walk up from a yuRUbf div to find the closest ancestor with a description."""
@@ -224,6 +268,9 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         desc_div = item.find("div", class_="VwiC3b")
         if not isinstance(desc_div, Tag):
             desc_div = item.find("span", class_="st")
+        if not isinstance(desc_div, Tag):
+            # Video-card results carry the snippet beside the thumbnail
+            desc_div = item.find("div", class_="ITZIwc")
         description = clean_text(desc_div.get_text()) if isinstance(desc_div, Tag) else None
 
         return SearchResult(
@@ -1612,7 +1659,7 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
         )
 
     def _extract_local_businesses(self, soup: BeautifulSoup) -> list[SearchResult]:
-        """Extract local business pack results (div.cXedhc cards)."""
+        """Extract local business pack results (div.cXedhc cards, no-JS div.GanCKe cards)."""
         results: list[SearchResult] = []
         for item in soup.find_all("div", class_="cXedhc"):
             if not isinstance(item, Tag):
@@ -1620,7 +1667,96 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             result = self._parse_local_business(item)
             if result:
                 results.append(result)
+        for item in soup.find_all("div", class_="GanCKe"):
+            if not isinstance(item, Tag):
+                continue
+            result = self._parse_no_js_local_business(item)
+            if result:
+                results.append(result)
         return results
+
+    def _parse_no_js_local_business(self, item: Tag) -> SearchResult | None:
+        """Parse one no-JS mobile places card (div.GanCKe).
+
+        The name is an h3.zBAuLc inside a ``/searchviewer`` link; the div.d6Ejqe beside it holds
+        rating, category, location and hours as ``<br>``-separated lines whose order varies by
+        vertical (shops, hotels, gas stations). Every line is kept in ``metadata["details"]``;
+        ``category``, ``location`` and ``hours`` are set only where a line's shape says which it is.
+        """
+        link = item.find("a", href=True)
+        name_el = item.find("h3", class_="zBAuLc")
+        if not isinstance(link, Tag) or not isinstance(name_el, Tag):
+            return None
+        if not str(link.get("href", "")).startswith(("/searchviewer", "/search")):
+            return None
+        name = clean_text(name_el.get_text())
+        if not name:
+            return None
+
+        metadata: dict[str, object] = {}
+        rating_el = item.find("span", class_="yi40Hd")
+        if isinstance(rating_el, Tag) and clean_text(rating_el.get_text()):
+            metadata["rating"] = clean_text(rating_el.get_text())
+        reviews_el = item.find("span", class_="RDApEe")
+        if isinstance(reviews_el, Tag):
+            reviews = re.sub(r"[()]", "", clean_text(reviews_el.get_text())).strip()
+            if reviews:
+                metadata["reviews"] = reviews
+
+        block = item.find("div", class_="d6Ejqe")
+        lines = self._no_js_local_lines(block if isinstance(block, Tag) else None)
+        for line in lines:
+            self._classify_no_js_local_line(line, metadata)
+        details = [line.lstrip("·⋅ ") for line in lines]
+        if details:
+            metadata["details"] = details
+
+        return SearchResult(
+            title=name,
+            url="",
+            description=None,
+            position=0,
+            result_type="local_business",
+            metadata=metadata,
+        )
+
+    @staticmethod
+    def _no_js_local_lines(block: Tag | None) -> list[str]:
+        """Split a places card's detail block on ``<br>``, leaving the rating stars out.
+
+        A line that followed the stars keeps its leading ``·`` (``"· Language school"``).
+        """
+        if not isinstance(block, Tag):
+            return []
+        lines: list[str] = [""]
+        for el in block.children:
+            if isinstance(el, Tag) and el.name == "br":
+                lines.append("")
+            elif isinstance(el, Tag) and "UK5aid" in (el.get("class") or []):
+                continue
+            else:
+                text = el.get_text(" ") if isinstance(el, Tag) else str(el)
+                lines[-1] += " " + text
+        cleaned = [clean_text(line) for line in lines]
+        return [line for line in cleaned if line.strip("·⋅ ")]
+
+    @staticmethod
+    def _classify_no_js_local_line(line: str, metadata: dict[str, object]) -> None:
+        """Fill category/location/hours from one detail line when its shape is unambiguous."""
+        if line[:1] in "·⋅":
+            # After the stars: "· Language school", or a restaurant's price level "· $30–80"
+            text = line.lstrip("·⋅ ")
+            metadata.setdefault("price" if text[:1] in "$€£¥₹" else "category", text)
+            return
+        if re.match(r"(open|closed|opens|closes)\b", line, re.I) or re.search(r"\bhours\b", line):
+            metadata.setdefault("hours", line)
+            return
+        # "Running store ⋅ Ashburn, VA" or "10+ years in business ⋅ Reston, VA"
+        parts = re.split(r"\s+[⋅·]\s+", line, maxsplit=1)
+        if len(parts) == 2:
+            if not re.search(r"years? in business", parts[0], re.I):
+                metadata.setdefault("category", parts[0])
+            metadata.setdefault("location", parts[1])
 
     def _parse_local_business(self, item: Tag) -> SearchResult | None:
         """Parse a single local business pack card (div.cXedhc)."""
