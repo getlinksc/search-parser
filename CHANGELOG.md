@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Video-card organic results (div.PmEWq: title link `a > h3.LC20lb`, snippet div.ITZIwc, no yuRUbf)
+  are returned in page order with the other results. On the desktop Chrome layout they were dropped,
+  and a page made only of them parsed to 0 results. Their links may be `/goto?url=` like other
+  results there
+- No-JS (Opera Mini) places packs, div.GanCKe cards linking to `/searchviewer`, are returned as
+  `local_businesses` with `rating`, `reviews`, and `category`, `location`, `hours` or `price` where a line's
+  shape says which it is. Every detail line is in `metadata["details"]`. These cards were ignored, so a
+  places-only page came back empty
+
 ---
 
 ## [0.5.14] - 2026-10-26
