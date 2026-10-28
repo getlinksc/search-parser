@@ -116,7 +116,7 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
     def _parse_metadata(self, soup: BeautifulSoup, html: str) -> dict[str, object]:
         """Page metadata plus the ``extras`` from :meth:`parse_extras` (when any were found)."""
         metadata = self._extract_page_metadata(soup)
-        extras = self.parse_extras(html)
+        extras = self.parse_extras(html, soup)
         if extras:
             metadata["extras"] = extras
         return metadata
@@ -802,16 +802,39 @@ class GoogleParser(GoogleExtrasMixin, BaseParser):
             for m in self._JSL_DH_ANY.finditer(text):
                 body = m.group(3) if m.group(3) is not None else m.group(4)
                 frags.append((m.group(1) or m.group(2), self._js_unescape(body)))
+        if not frags:
+            return
+        # id -> elements carrying it, so each fragment does not walk the whole tree
+        # (root.find per fragment and round was most of a desktop parse).
+        by_id: dict[str, list[Tag]] = {}
+
+        def index(tree: Tag) -> None:
+            for el in tree.find_all(id=True):
+                by_id.setdefault(str(el.get("id")), []).append(el)
+
+        def target(fid: str) -> Tag | None:
+            # still under root: a cleared element's old descendants are not (identity, not Tag ==)
+            live = [el for el in by_id.get(fid, ()) if any(p is root for p in el.parents)]
+            if len(live) > 1:  # a repeated id: the first in document order, as find() gives
+                found = root.find(id=fid)
+                return found if isinstance(found, Tag) else None
+            return live[0] if live else None
+
+        index(root)
         for _ in range(6):  # fragments can target ids created by other fragments
             left = []
             for fid, body in frags:
-                el = root.find(id=fid)
-                if not isinstance(el, Tag):
+                el = target(fid)
+                if el is None:
                     left.append((fid, body))
                     continue
                 el.clear()
                 for child in list(make_soup(body).contents):
                     el.append(child)
+                    if isinstance(child, Tag):
+                        if child.get("id") is not None:
+                            by_id.setdefault(str(child.get("id")), []).append(child)
+                        index(child)
             if len(left) == len(frags):
                 break
             frags = left

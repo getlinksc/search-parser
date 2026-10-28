@@ -300,12 +300,17 @@ class GoogleExtrasMixin:
             )
         return out
 
-    def parse_extras(self, content: str) -> dict[str, Any]:
+    def parse_extras(self, content: str, soup: BeautifulSoup | None = None) -> dict[str, Any]:
         """Fields the search-parser/_parse pair leave out. Returns only keys it
-        found; every part is independent so one failing selector costs only itself."""
+        found; every part is independent so one failing selector costs only itself.
+
+        ``soup`` is ``content`` already parsed (``parse`` passes its own), which saves
+        building a second tree of a page that can be megabytes; none of the parts
+        change it."""
         if not content:
             return {}
-        soup = BeautifulSoup(content, "lxml")
+        if soup is None:
+            soup = BeautifulSoup(content, "lxml")
         out = {}
         parts = (
             ("total", lambda: self._x_total(content)),

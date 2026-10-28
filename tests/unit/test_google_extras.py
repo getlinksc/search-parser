@@ -152,3 +152,10 @@ def test_parse_puts_extras_in_metadata() -> None:
     assert extras["pagination"]["has_next"] is True
     bare = PARSER.parse(_page("<p>no extras</p>"))
     assert "extras" not in bare.metadata
+
+
+def test_a_given_soup_gives_the_same_extras() -> None:
+    from search_parser.utils import make_soup
+
+    html = _page(TOTAL_RAW)
+    assert PARSER.parse_extras(html, make_soup(html)) == PARSER.parse_extras(html)
