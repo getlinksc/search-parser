@@ -2001,7 +2001,7 @@ wheels = [
 
 [[package]]
 name = "search-parser"
-version = "0.5.15"
+version = "0.5.16"
 source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },

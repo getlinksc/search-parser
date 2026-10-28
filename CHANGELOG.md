@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.16] - 2026-10-28
+
 ### Changed
 
 - Google parsing is about 40% faster on desktop pages (42-53% on the 1-2 MB Chrome fixtures), with
