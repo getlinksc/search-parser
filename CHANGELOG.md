@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.16] - 2026-10-28
+
+### Changed
+
+- Google parsing is about 40% faster on desktop pages (42-53% on the 1-2 MB Chrome fixtures), with
+  identical output on every fixture. The AI-overview splice of `jsl.dh` fragments looked each
+  fragment's target up with a walk of the whole tree, per fragment and round; it now uses an id
+  index built once. `parse_extras` takes an optional `soup` and `parse` passes its own, so the page
+  is no longer parsed into a second tree
+
+---
+
 ## [0.5.15] - 2026-10-28
 
 ### Fixed
