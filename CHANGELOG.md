@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.5.15] - 2026-10-28
+
 ### Fixed
 
 - Video-card organic results (div.PmEWq: title link `a > h3.LC20lb`, snippet div.ITZIwc, no yuRUbf)
