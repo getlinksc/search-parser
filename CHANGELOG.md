@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shape says which it is. Every detail line is in `metadata["details"]`. These cards were ignored, so a
   places-only page came back empty
 
+### Documentation
+
+- `docs/google.md` covers video-card results and the local business pack metadata. The usage examples
+  read local business keys with `.get()`, since every key is optional. New
+  `examples/places_and_video_cards.py`
+
 ---
 
 ## [0.5.14] - 2026-10-26

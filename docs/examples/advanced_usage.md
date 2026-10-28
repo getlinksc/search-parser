@@ -125,11 +125,12 @@ for article in results.news:
     print(f"  {article.metadata['source']} · {article.metadata['published_time']}")
     print(f"  {article.url}")
 
-# Local business pack — metadata includes rating, reviews, category, location, hours, phone, sponsored
+# Local business pack — every metadata key is optional: rating, reviews, category, location,
+# hours, phone, sponsored, and on no-JS pages price and details (all of a card's lines)
 for biz in results.local_businesses:
     print(biz.title)
     print(
-        f"  {biz.metadata['rating']} ({biz.metadata.get('reviews')} reviews) · {biz.metadata.get('category')}"
+        f"  {biz.metadata.get('rating')} ({biz.metadata.get('reviews')} reviews) · {biz.metadata.get('category')}"
     )
     print(f"  {biz.metadata.get('location')} · {biz.metadata.get('phone')}")
     print(f"  {biz.metadata.get('hours')}")
@@ -146,6 +147,36 @@ if isinstance(pagination, dict):
 
 See [Google Parsing](../google.md) for the complete schema and the differences
 between desktop, standard mobile, and no-JS mobile pages.
+
+## Places-only Pages and Video Cards
+
+A no-JS mobile page can hold nothing but a places pack: `results` is empty and the
+businesses are in `local_businesses`. Check both before treating a page as empty.
+
+```python
+results = GoogleParser().parse(html)
+
+if not results.results and not results.local_businesses:
+    print("Nothing on this page")
+
+for biz in results.local_businesses:
+    meta = biz.metadata
+    # A gas station has no rating, a shop has no price: read every key with .get()
+    print(biz.title, meta.get("rating"), meta.get("category"), meta.get("price"))
+    # details keeps every line in page order, including ones not classified
+    print(meta.get("details", []))
+```
+
+Desktop video cards (a thumbnail beside the title) are ordinary organic results at their
+page position. Their `url` can be a Google `/goto?url=...` redirect:
+
+```python
+for result in results.results:
+    if result.url.startswith("/goto?"):
+        print("redirect:", result.title)
+```
+
+`examples/places_and_video_cards.py` runs both cases against the synthetic fixtures.
 
 ## Using to_json() and to_markdown()
 

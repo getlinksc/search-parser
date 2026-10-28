@@ -179,6 +179,14 @@ for article in data["news"]:
     print(article["title"], article["url"])
     print(article["metadata"]["source"], article["metadata"]["published_time"])
 
+# Local business pack — every metadata key is optional. A no-JS places-only page has
+# an empty data["results"] and its businesses here.
+for biz in data["local_businesses"]:
+    meta = biz["metadata"]
+    print(biz["title"], meta.get("rating"), meta.get("reviews"), meta.get("category"))
+    print(meta.get("location"), meta.get("hours"), meta.get("price"), meta.get("phone"))
+    print(meta.get("details", []))  # no-JS pages: every line of the card
+
 # Metadata
 print(data["search_engine"])  # "google"
 print(data["query"])  # "python web scraping"
